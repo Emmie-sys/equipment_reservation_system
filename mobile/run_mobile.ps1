@@ -18,7 +18,7 @@ $currentDir = Get-Location
 if (Test-Path (Join-Path $currentDir "mobile\package.json")) {
     $RootDir = $currentDir
     $MobileDir = Join-Path $currentDir "mobile"
-} elseif (Test-Path (Join-Path $currentDir "package.json") -and (Test-Path (Join-Path $currentDir "App.tsx"))) {
+} elseif ((Test-Path (Join-Path $currentDir "package.json")) -and (Test-Path (Join-Path $currentDir "App.tsx"))) {
     $MobileDir = $currentDir
     $RootDir = Split-Path -Parent $currentDir
 } else {
