@@ -2,64 +2,52 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\IncidentController;
-use App\Http\Controllers\Api\SanctionController;
-use App\Http\Controllers\Api\StudentController;
+use App\Http\Controllers\Api\EquipmentController;
+use App\Http\Controllers\Api\ReservationController;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes (Section 6 Endpoints)
+| API Routes  —  Equipment Reservation System  (v1)
 |--------------------------------------------------------------------------
+|
+| All routes here are prefixed with /api/v1 via RouteServiceProvider.
+|
 */
 
-Route::prefix('v1')->group(function () {
-    // 6.1 Authentication Routes (Public)
-    Route::prefix('auth')->group(function () {
-        Route::post('login', [AuthController::class, 'login'])->name('auth.login');
-        Route::post('refresh', [AuthController::class, 'refresh'])->name('auth.refresh');
+// ─── Public ───────────────────────────────────────────────────────────────────
 
-        // Authenticated Auth Endpoints
-        Route::middleware(['auth:api'])->group(function () {
-            Route::get('me', [AuthController::class, 'me'])->name('auth.me');
-            Route::post('logout', [AuthController::class, 'logout'])->name('auth.logout');
-        });
+Route::prefix('v1')->group(function () {
+
+    // Authentication
+    Route::prefix('auth')->group(function () {
+        Route::post('login',  [AuthController::class, 'login']);
+        Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+        Route::get('me',      [AuthController::class, 'me'])->middleware('auth:sanctum');
     });
 
-    // Protected Business Routes
-    Route::middleware(['auth:api'])->group(function () {
-        // 6.2 Student Endpoints
-        Route::prefix('students')->group(function () {
-            Route::get('/', [StudentController::class, 'index'])->name('students.index');
-            Route::get('{id}', [StudentController::class, 'show'])->name('students.show');
-            Route::get('{id}/demerit-summary', [StudentController::class, 'demeritSummary'])->name('students.demerits');
-            Route::post('{id}/remit', [StudentController::class, 'remit'])
-                ->middleware('role:ADMIN,DISCIPLINARY_OFFICER')
-                ->name('students.remit');
+    // ─── Protected ────────────────────────────────────────────────────────────
+
+    Route::middleware('auth:sanctum')->group(function () {
+
+        // ── Equipment ──────────────────────────────────────────────────────────
+        Route::prefix('equipment')->group(function () {
+            Route::get('/',            [EquipmentController::class, 'index']);    // Catalog
+            Route::post('/',           [EquipmentController::class, 'store']);    // Admin/Tech add
+            Route::get('{id}',         [EquipmentController::class, 'show']);     // Single unit
+            Route::patch('{id}',       [EquipmentController::class, 'update']);   // Admin/Tech update
+            Route::delete('{id}',      [EquipmentController::class, 'destroy']);  // Admin delete
+            Route::get('{id}/availability', [EquipmentController::class, 'checkAvailability']); // Availability window
         });
 
-        // 6.3 Incident Endpoints
-        Route::prefix('incidents')->group(function () {
-            Route::get('/', [IncidentController::class, 'index'])->name('incidents.index');
-            Route::post('/', [IncidentController::class, 'store'])
-                ->middleware('role:ADMIN,DISCIPLINARY_OFFICER,TEACHER')
-                ->name('incidents.store');
-            Route::get('{id}', [IncidentController::class, 'show'])->name('incidents.show');
-            Route::patch('{id}/status', [IncidentController::class, 'updateStatus'])
-                ->middleware('role:ADMIN,DISCIPLINARY_OFFICER')
-                ->name('incidents.status');
+        // ── Reservations ───────────────────────────────────────────────────────
+        Route::prefix('reservations')->group(function () {
+            Route::get('/',                        [ReservationController::class, 'index']);   // List (scoped)
+            Route::post('/',                       [ReservationController::class, 'store']);   // Submit
+            Route::get('{id}',                     [ReservationController::class, 'show']);    // Detail
+            Route::patch('{id}/approve',           [ReservationController::class, 'approve']); // Admin/Tech approve
+            Route::patch('{id}/reject',            [ReservationController::class, 'reject']);  // Admin/Tech reject
+            Route::patch('{id}/cancel',            [ReservationController::class, 'cancel']);  // Owner/Admin cancel
         });
 
-        // 6.4 Sanction Endpoints
-        Route::prefix('sanctions')->group(function () {
-            Route::get('/', [SanctionController::class, 'index'])->name('sanctions.index');
-            Route::post('/', [SanctionController::class, 'store'])
-                ->middleware('role:ADMIN,DISCIPLINARY_OFFICER')
-                ->name('sanctions.store');
-            Route::get('{id}', [SanctionController::class, 'show'])->name('sanctions.show');
-            Route::patch('{id}/complete', [SanctionController::class, 'complete'])
-                ->middleware('role:ADMIN,DISCIPLINARY_OFFICER')
-                ->name('sanctions.complete');
-            Route::post('{id}/appeal', [SanctionController::class, 'appeal'])->name('sanctions.appeal');
-        });
     });
 });

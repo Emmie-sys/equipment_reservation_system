@@ -4,11 +4,34 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useMobileAuth } from '../context/AuthContext';
 import { LoginScreen } from '../screens/LoginScreen';
-import { ReportIncidentScreen } from '../screens/ReportIncidentScreen';
-import { MyIncidentsScreen } from '../screens/MyIncidentsScreen';
+import { EquipmentCatalogScreen } from '../screens/EquipmentCatalogScreen';
+import { MyReservationsScreen } from '../screens/MyReservationsScreen';
+import { NewReservationScreen } from '../screens/NewReservationScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+
+function CatalogStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: '#0f172a' },
+        headerTintColor: '#ffffff',
+      }}
+    >
+      <Stack.Screen 
+        name="CatalogList" 
+        component={EquipmentCatalogScreen} 
+        options={{ title: 'Equipment Catalog' }} 
+      />
+      <Stack.Screen 
+        name="NewReservation" 
+        component={NewReservationScreen} 
+        options={{ title: 'Reserve Equipment' }} 
+      />
+    </Stack.Navigator>
+  );
+}
 
 function MainTabs() {
   return (
@@ -21,8 +44,16 @@ function MainTabs() {
         tabBarInactiveTintColor: '#64748b',
       }}
     >
-      <Tab.Screen name="MyIncidents" component={MyIncidentsScreen} options={{ title: 'Incidents' }} />
-      <Tab.Screen name="Report" component={ReportIncidentScreen} options={{ title: 'Report Case' }} />
+      <Tab.Screen 
+        name="CatalogTab" 
+        component={CatalogStack} 
+        options={{ title: 'Catalog', headerShown: false }} 
+      />
+      <Tab.Screen 
+        name="MyReservations" 
+        component={MyReservationsScreen} 
+        options={{ title: 'My Bookings' }} 
+      />
     </Tab.Navigator>
   );
 }

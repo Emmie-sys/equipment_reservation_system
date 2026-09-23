@@ -3,24 +3,22 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class AuditService
 {
     /**
-     * Records an immutable entry in audit_logs
+     * Records an immutable entry in audit_logs for every critical state change
      */
     public function log(
-        ?string $actorId,
+        ?int $userId,
         string $action,
         string $entityType,
-        string $entityId,
+        int $entityId,
         ?array $oldValues = null,
         ?array $newValues = null
     ): void {
         DB::table('audit_logs')->insert([
-            'id' => (string) Str::uuid(),
-            'actor_id' => $actorId,
+            'user_id' => $userId,
             'action' => $action,
             'entity_type' => $entityType,
             'entity_id' => $entityId,
@@ -28,7 +26,7 @@ class AuditService
             'new_values' => $newValues ? json_encode($newValues) : null,
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
-            'created_at' => now(),
+            'performed_at' => now(),
         ]);
     }
 }

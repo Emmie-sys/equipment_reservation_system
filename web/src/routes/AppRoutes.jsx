@@ -2,38 +2,42 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
 import DashboardView from '../features/dashboard/DashboardView';
-import IncidentList from '../features/incidents/IncidentList';
-import SanctionList from '../features/sanctions/SanctionList';
-import StudentList from '../features/students/StudentList';
+import EquipmentCatalogPage from '../features/equipment/EquipmentCatalogPage';
+import ReservationsPage from '../features/reservations/ReservationsPage';
+import LoginPage from '../features/auth/LoginPage';
 
 export default function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<DashboardView />} />
+      <Route path="/login" element={<LoginPage />} />
+
       <Route
-        path="/incidents"
+        path="/"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'DISCIPLINARY_OFFICER', 'TEACHER']}>
-            <IncidentList />
+          <ProtectedRoute>
+            <DashboardView />
           </ProtectedRoute>
         }
       />
+
       <Route
-        path="/sanctions"
+        path="/catalog"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'DISCIPLINARY_OFFICER']}>
-            <SanctionList />
+          <ProtectedRoute>
+            <EquipmentCatalogPage />
           </ProtectedRoute>
         }
       />
+
       <Route
-        path="/students"
+        path="/reservations"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'DISCIPLINARY_OFFICER', 'TEACHER']}>
-            <StudentList />
+          <ProtectedRoute>
+            <ReservationsPage />
           </ProtectedRoute>
         }
       />
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

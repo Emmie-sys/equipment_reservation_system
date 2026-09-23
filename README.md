@@ -1,68 +1,98 @@
-# Student Incident, Sanction & Disciplinary Management System
+# Institutional Equipment Reservation and Tracking System
 
-A multi-platform enterprise system for reporting student incidents, tracking demerit points, managing sanctions, and auditing disciplinary workflows.
+A full-stack enterprise institutional equipment reservation and asset tracking system. A single PostgreSQL-backed PHP REST API powers two dedicated client applications: a modern React Web Portal and a React Native Mobile App (ready for Expo Go).
 
 ---
 
-## 📁 Repository Structure
+## System Architecture
+
+```text
+                 ┌──────────────────────────────────────────────┐
+                 │       PostgreSQL 16 Relational Database      │
+                 │     57 Tables (port 5432, password: emmie)   │
+                 └──────────────────────▲───────────────────────┘
+                                        │
+                         SQL (PDO / Eloquent Models)
+                                        │
+                 ┌──────────────────────┴───────────────────────┐
+                 │       PHP / Laravel REST API (v1)            │
+                 │   JWT Auth, Availability Engine, Audit Logs  │
+                 │              (Port 8000)                     │
+                 └──────────────▲────────────────▲──────────────┘
+                                │                │
+                      JSON / HTTPS             JSON / HTTPS
+                                │                │
+        ┌───────────────────────┴──────┐  ┌──────┴────────────────────────┐
+        │       React Web Portal       │  │   React Native Mobile App     │
+        │   Vite + Glassmorphism UI    │  │       (Expo Go Mobile)        │
+        │         (Port 5173)          │  │     (Android / iOS Phones)    │
+        └──────────────────────────────┘  └───────────────────────────────┘
+```
+
+---
+
+## Repository Structure
 
 ```text
 .
-├── backend/            # PHP API (Laravel)
+├── run_backend.ps1     # PowerShell script to start PHP backend API
+├── run_mobile.ps1      # PowerShell script to start Expo mobile development server
+├── backend/            # PHP / Laravel REST API
 │   ├── app/
 │   │   ├── Http/
-│   │   │   ├── Controllers/Api/ # REST controllers (IncidentController, SanctionController...)
-│   │   │   ├── Middleware/      # Role and JWT authentication checks
-│   │   │   └── Requests/        # Form validation requests
-│   │   ├── Models/              # Eloquent models (Student, Incident, Sanction, User)
-│   │   ├── Services/            # Core business rules (DemeritService, AuditService)
-│   │   └── Policies/            # Role-based authorization policies
-│   ├── database/
-│   │   ├── migrations/          # Schema migrations in dependency order
-│   │   ├── seeders/             # Initial terms, classes, users, rules
-│   │   └── factories/           # Model factories
+│   │   │   ├── Controllers/Api/ # AuthController, EquipmentController, ReservationController
+│   │   │   └── Requests/        # StoreReservationRequest (server validation)
+│   │   ├── Models/              # Equipment, Reservation, User, Role, Room, Approval, etc.
+│   │   ├── Services/            # AvailabilityService (conflict engine), ReservationService, AuditService
+│   │   ├── Policies/            # ReservationPolicy, EquipmentPolicy
+│   │   └── Exceptions/          # EquipmentConflictException (HTTP 409)
+│   ├── config/                  # database.php (PostgreSQL connection)
 │   ├── routes/
-│   │   └── api.php              # REST API endpoints
-│   ├── tests/                   # Unit & feature tests for business logic
-│   ├── .env.example
-│   └── composer.json
+│   │   └── api.php              # Full v1 REST routes (/auth, /equipment, /reservations)
+│   └── tests/Unit/              # AvailabilityServiceTest.php (interval math tests)
 │
-├── web/                # React Web Application (Vite / React 18+)
+├── web/                # React Web Portal (Vite + Tailwind/CSS Variables)
 │   ├── src/
-│   │   ├── api/                 # Resource API wrappers (incidents, sanctions, etc.)
-│   │   ├── components/common/   # Reusable UI (Buttons, Tables, Modals)
-│   │   ├── features/            # Feature modules (incidents, sanctions, students, dashboard)
-│   │   ├── context/             # AuthContext (user, role, token)
-│   │   ├── hooks/               # useAuth, useFetch, etc.
-│   │   ├── routes/              # App routing & role-based route guards
-│   │   └── utils/               # Formatting and helper utilities
-│   ├── .env.example
+│   │   ├── api/                 # client.js, auth.js, equipment.js, reservations.js
+│   │   ├── context/             # AuthContext.jsx (session token, user role)
+│   │   ├── features/
+│   │   │   ├── auth/            # LoginPage.jsx (one-click demo logins)
+│   │   │   ├── dashboard/       # DashboardView.jsx (KPI metrics, recent bookings)
+│   │   │   ├── equipment/       # EquipmentCatalogPage.jsx (search, availability check, modal booking)
+│   │   │   └── reservations/    # ReservationsPage.jsx (review, approve, reject, cancel)
+│   │   ├── routes/              # AppRoutes.jsx, ProtectedRoute.jsx
+│   │   ├── index.css            # Dark glassmorphism design system
+│   │   └── App.jsx              # Sidebar layout, topbar, user profile badge
 │   └── package.json
 │
-├── mobile/             # React Native Mobile App
+├── mobile/             # React Native Mobile App (Expo Go ready)
 │   ├── src/
-│   │   ├── api/                 # Mobile API client sharing schema with web
-│   │   ├── components/          # Native components
-│   │   ├── screens/             # LoginScreen, ReportIncidentScreen, MyIncidentsScreen
-│   │   ├── navigation/          # React Navigation stacks & tabs
-│   │   └── context/             # AuthContext & state providers
-│   ├── android/
-│   ├── ios/
+│   │   ├── api/                 # mobileApiClient, equipment.ts, reservations.ts
+│   │   ├── context/             # AuthContext.tsx
+│   │   ├── navigation/          # AppNavigator.tsx (bottom tabs + stack)
+│   │   └── screens/
+│   │       ├── LoginScreen.tsx          # Mobile authentication
+│   │       ├── EquipmentCatalogScreen.tsx # Searchable inventory
+│   │       ├── NewReservationScreen.tsx # Time slot picker & conflict check
+│   │       └── MyReservationsScreen.tsx # Student/Faculty personal bookings
+│   ├── app.json         # Expo configuration
 │   └── package.json
 │
-├── shared/             # Framework-agnostic JS logic shared across Web & Mobile
-│   ├── constants.js             # Offence severities, roles, status enums
-│   └── validation.js            # Universal validation rules
+├── shared/             # Domain constants & validation logic shared across Web & Mobile
+│   ├── constants.js     # Status types, purpose types, error codes
+│   └── validation.js    # Time range and input validation
 │
-├── database/           # Standalone DB artifacts
-│   ├── schema.sql               # Full PostgreSQL DDL
-│   ├── seed_data.sql            # Initial test and baseline data
-│   └── erd.png                  # Entity-relationship diagram
+├── database/           # PostgreSQL DDL & Test Data
+│   ├── schema.sql       # Complete 57-table PostgreSQL schema
+│   └── seed_data.sql    # System roles, categories, test equipment, rooms, users
 │
-├── docs/               # Architecture and documentation
-│   ├── PROJECT_CONTEXT.md       # Full architectural context and business rules
-│   ├── api-spec.md              # REST API specification
-│   └── screenshots/             # UI screenshots and flow captures
+├── docs/               # Technical documentation
+│   ├── RUNNING_INSTRUCTIONS.md # Step-by-step launch guide for Backend, Web & Mobile
+│   ├── PROJECT_CONTEXT.md      # Domain architecture and data flows
+│   └── api-spec.md             # REST API endpoint specifications
+│
+├── progress_notes/     # Development milestone tracking
+│   └── current_progress_and_next_steps.md # Detailed progress & roadmap
 │
 ├── .gitignore
 └── README.md
@@ -70,137 +100,57 @@ A multi-platform enterprise system for reporting student incidents, tracking dem
 
 ---
 
-## 🚀 Getting Started
+## Quick Start Instructions
 
-### Prerequisites
+Detailed, step-by-step instructions are available in [docs/RUNNING_INSTRUCTIONS.md](file:///H:/equipment_reservation_system/docs/RUNNING_INSTRUCTIONS.md).
 
-- **PHP 8.2+** with `pdo_pgsql`, `mbstring`, `openssl`, and `bcmath` extensions
-- **Composer** (v2+)
-- **Node.js** (v18+ or v20+) & **npm**
-- **PostgreSQL 14+**
-- *(For mobile)*: React Native CLI / Expo CLI, Android Studio / Xcode
-
----
-
-### 1. Database Setup (PostgreSQL)
-
-Create a dedicated database for the application:
-
-```bash
-psql -U postgres -c "CREATE DATABASE student_incident_db;"
-psql -U postgres -d student_incident_db -f database/schema.sql
-psql -U postgres -d student_incident_db -f database/seed_data.sql
+### 1. Backend REST API
+Run the backend starter script:
+```powershell
+.\run_backend.ps1
+```
+Or execute manually:
+```powershell
+cd H:\equipment_reservation_system\backend
+& C:\xampp\php\php.exe -S 0.0.0.0:8000 -t public
 ```
 
----
+### 2. React Web Portal
+```powershell
+cd H:\equipment_reservation_system\web
+npm run dev
+```
+Open your browser at `http://localhost:5173`.
 
-### 2. Backend Setup (Laravel API)
-
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-2. Install PHP dependencies:
-   ```bash
-   composer install
-   ```
-3. Copy environment configuration:
-   ```bash
-   cp .env.example .env
-   ```
-4. Configure database and JWT credentials in `.env`:
-   ```env
-   DB_CONNECTION=pgsql
-   DB_HOST=127.0.0.1
-   DB_PORT=5432
-   DB_DATABASE=student_incident_db
-   DB_USERNAME=postgres
-   DB_PASSWORD=your_password
-
-   JWT_SECRET=your_generated_jwt_secret
-   ```
-5. Generate application key and JWT secret:
-   ```bash
-   php artisan key:generate
-   php artisan jwt:secret
-   ```
-6. Run migrations & seeders (if not using standalone `schema.sql`):
-   ```bash
-   php artisan migrate --seed
-   ```
-7. Run the development server:
-   ```bash
-   php artisan serve --port=8000
-   ```
-   The backend API will be available at `http://127.0.0.1:8000/api`.
-
-8. Run test suite:
-   ```bash
-   php artisan test
-   ```
+### 3. React Native Mobile App (with Expo Go)
+1. Verify `BASE_URL` in `mobile/src/api/client.ts` points to your machine's Wi-Fi IP (e.g. `http://192.168.x.x:8000/api/v1`).
+2. Run the mobile starter script:
+```powershell
+.\run_mobile.ps1
+```
+Or execute manually:
+```powershell
+cd H:\equipment_reservation_system\mobile
+npx expo start
+```
+3. Open Expo Go on your device, scan the QR code, and test immediately.
 
 ---
 
-### 3. Web Setup (React Web Application)
+## Default Institutional Demo Credentials
 
-1. Navigate to the web directory:
-   ```bash
-   cd web
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Copy environment variables:
-   ```bash
-   cp .env.example .env
-   ```
-   Ensure `VITE_API_BASE_URL=http://127.0.0.1:8000/api` is configured.
-4. Start development server:
-   ```bash
-   npm run dev
-   ```
-   Access the dashboard at `http://localhost:5173`.
+| Role | Email | Password | Permissions |
+| :--- | :--- | :--- | :--- |
+| **Admin / Technician** | `admin@institution.edu` | `emmie` | Approve/Reject bookings, inventory management, audit trail |
+| **Faculty / Staff** | `staff@institution.edu` | `emmie` | Request equipment, review department bookings |
+| **Student** | `student@institution.edu` | `emmie` | Browse equipment catalog, submit bookings, cancel own bookings |
 
 ---
 
-### 4. Mobile Setup (React Native)
+## Business Rules & Conflict Engine
 
-1. Navigate to the mobile directory:
-   ```bash
-   cd mobile
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start Metro bundler:
-   ```bash
-   npm start
-   ```
-4. Run on Android or iOS:
-   ```bash
-   npm run android
-   # or
-   npm run ios
-   ```
-
----
-
-## 🔒 User Roles & Permissions
-
-| Role | Permissions |
-| :--- | :--- |
-| **Admin** | Full system access, configuration, sanction policy management, user management. |
-| **Dean / Disciplinary Officer** | Review incidents, approve/escalate sanctions, manage demerit thresholds. |
-| **Staff / Teacher** | Report incidents, view reported history, comment on investigations. |
-| **Student** | View assigned demerits, active sanctions, and personal history (read-only). |
-
----
-
-## 📖 Documentation Links
-
-- **[Project Context & Business Rules](file:///h:/equipment_reservation_system/docs/PROJECT_CONTEXT.md)**
-- **[REST API Specification](file:///h:/equipment_reservation_system/docs/api-spec.md)**
-- **[Database Schema DDL](file:///h:/equipment_reservation_system/database/schema.sql)**
-- **[Database Seed Data](file:///h:/equipment_reservation_system/database/seed_data.sql)**
+- **Strict Interval Overlap Check**: Reservations check the interval formula:
+  $$\text{Overlap} \iff (\text{Reservation.Start} < \text{Requested.End}) \land (\text{Reservation.End} > \text{Requested.Start})$$
+  Double-bookings return HTTP 409 Conflict with the exact conflicting slot.
+- **Audit Trails**: All status updates (pending -> approved -> active -> completed/cancelled) are recorded in both `reservation_status_history` and `audit_logs`.
+- **Role Isolation**: Non-administrators can only query and manage their own reservations.

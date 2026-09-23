@@ -3,69 +3,104 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
+    public function __construct(
+        protected AuditService $auditService
+    ) {}
+
+    /**
+     * POST /api/v1/auth/login
+     */
+    public function login(Request $request): JsonResponse
     {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
+        $request->validate([
+            'email'    => 'required|email',
+            'password' => 'required|string|min:6',
         ]);
 
-        if (!$token = JWTAuth::attempt(['email' => $credentials['email'], 'password' => $credentials['password']])) {
+        $user = User::where('email', $request->input('email'))->first();
+
+        if (!$user || !Hash::check($request->input('password'), $user->password_hash)) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Invalid email or password credentials.',
+                'success' => false,
+                'message' => 'Invalid email or password.',
             ], 401);
         }
 
-        $user = Auth::user();
+        if (!$user->is_active) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your account is inactive. Please contact an administrator.',
+            ], 403);
+        }
+
+        // Create a Sanctum token
+        $token = $user->createToken('equipment-reservation-app')->plainTextToken;
+
+        $this->auditService->log($user->user_id, 'USER_LOGIN', 'User', $user->user_id);
 
         return response()->json([
-            'status' => 'success',
+            'success' => true,
+            'message' => 'Login successful.',
             'data' => [
                 'token' => $token,
-                'token_type' => 'bearer',
-                'expires_in' => config('jwt.ttl', 60) * 60,
+                'token_type' => 'Bearer',
                 'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'role' => $user->role,
+                    'user_id'     => $user->user_id,
+                    'email'       => $user->email,
+                    'first_name'  => $user->first_name,
+                    'last_name'   => $user->last_name,
+                    'roles'       => $user->roles->pluck('role_name'),
+                    'profile_photo_url' => $user->profile_photo_url,
                 ],
             ],
         ]);
     }
 
-    public function me()
+    /**
+     * POST /api/v1/auth/logout
+     */
+    public function logout(Request $request): JsonResponse
     {
+        $user = $request->user();
+
+        // Revoke the current access token
+        $request->user()->currentAccessToken()->delete();
+
+        $this->auditService->log($user->user_id, 'USER_LOGOUT', 'User', $user->user_id);
+
         return response()->json([
-            'status' => 'success',
-            'data' => Auth::user(),
+            'success' => true,
+            'message' => 'Logged out successfully.',
         ]);
     }
 
-    public function logout()
+    /**
+     * GET /api/v1/auth/me
+     * Returns the authenticated user's profile and roles
+     */
+    public function me(Request $request): JsonResponse
     {
-        JWTAuth::invalidate(JWTAuth::getToken());
+        $user = $request->user()->load(['roles', 'department']);
 
         return response()->json([
-            'status' => 'success',
-            'message' => 'Successfully logged out.',
-        ]);
-    }
-
-    public function refresh()
-    {
-        return response()->json([
-            'status' => 'success',
+            'success' => true,
             'data' => [
-                'token' => JWTAuth::refresh(),
-                'token_type' => 'bearer',
+                'user_id'       => $user->user_id,
+                'email'         => $user->email,
+                'first_name'    => $user->first_name,
+                'last_name'     => $user->last_name,
+                'display_name'  => trim("{$user->first_name} {$user->last_name}"),
+                'roles'         => $user->roles->pluck('role_name'),
+                'department'    => $user->department?->department_name,
+                'profile_photo_url' => $user->profile_photo_url,
             ],
         ]);
     }
