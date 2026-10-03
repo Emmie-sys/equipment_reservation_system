@@ -167,17 +167,17 @@ if ($DryRun) {
 
 # 5. Launch Expo Metro Bundler
 if ($Tunnel) {
-    Write-Host "[MODE] Running Expo in TUNNEL mode..." -ForegroundColor Magenta
+    Write-Host "[MODE] Running Expo in TUNNEL mode (Expo Go)..." -ForegroundColor Magenta
     if ($Clear) {
-        npx expo start --tunnel -c
+        npx expo start --go --tunnel -c
     } else {
-        npx expo start --tunnel
+        npx expo start --go --tunnel
     }
 } else {
-    Write-Host "[MODE] Running Expo in LAN mode (Host: $targetIp)..." -ForegroundColor Green
+    Write-Host "[MODE] Running Expo in LAN mode (Host: $targetIp, Expo Go)..." -ForegroundColor Green
     if ($Clear) {
-        npx expo start -c
+        npx expo start --go -c
     } else {
-        npx expo start
+        npx expo start --go
     }
 }

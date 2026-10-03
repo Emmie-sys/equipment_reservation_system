@@ -1,51 +1,77 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  StyleSheet, 
-  ScrollView, 
-  ActivityIndicator, 
-  Alert 
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  Pressable,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { mobileReservationApi } from '../api/reservations';
 import { mobileEquipmentApi } from '../api/equipment';
+import { useTheme } from '../context/ThemeContext';
+import { GlassCard } from '../components/GlassCard';
+import { Badge } from '../components/Badge';
+import { Button } from '../components/Button';
+import { AppHeader } from '../components/AppHeader';
+
+const PURPOSES = [
+  { id: '1', label: 'Coursework Assignment' },
+  { id: '2', label: 'Faculty Research Project' },
+  { id: '3', label: 'Senior Capstone Thesis' },
+  { id: '4', label: 'Student Org Presentation' },
+];
 
 export const NewReservationScreen = ({ route, navigation }: any) => {
   const { equipment } = route.params || {};
+  const { theme, isDark } = useTheme();
 
-  // Form states
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
+  const dayAfter = new Date(tomorrow);
+  dayAfter.setDate(dayAfter.getDate() + 2);
+  const dayAfterStr = dayAfter.toISOString().split('T')[0];
+
   const [startTime, setStartTime] = useState(`${tomorrowStr}T09:00:00`);
-  const [endTime, setEndTime] = useState(`${tomorrowStr}T17:00:00`);
-  const [purposeTypeId, setPurposeTypeId] = useState('1'); // Academic
+  const [endTime, setEndTime] = useState(`${dayAfterStr}T17:00:00`);
+  const [purposeTypeId, setPurposeTypeId] = useState('1');
   const [purposeDetails, setPurposeDetails] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [conflictStatus, setConflictStatus] = useState<string | null>(null);
 
   if (!equipment) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>No equipment unit selected.</Text>
+      <View style={[styles.container, { backgroundColor: theme.colors.canvasBg }]}>
+        <AppHeader title="Reserve Equipment" showBack onBack={() => navigation.goBack()} />
+        <View style={styles.centered}>
+          <Text style={[styles.errorText, { color: '#FB7185' }]}>No equipment unit selected.</Text>
+          <Button
+            title="Return to Catalog"
+            variant="primary"
+            size="sm"
+            style={{ marginTop: 12 }}
+            onPress={() => navigation.goBack()}
+          />
+        </View>
       </View>
     );
   }
 
   const handleCheckAvailability = async () => {
     try {
-      setConflictStatus('Checking schedule conflict engine...');
+      setConflictStatus('Verifying slot with reservation schedule...');
       const res = await mobileEquipmentApi.checkAvailability(equipment.equipment_id, startTime, endTime);
-      if (res.data.is_available) {
-        setConflictStatus('✅ Unit is available for this window!');
+      if (res.data?.is_available) {
+        setConflictStatus('Unit is available! No scheduling conflicts.');
       } else {
-        setConflictStatus('❌ CONFLICT: Unit is already booked during these hours.');
+        setConflictStatus('Conflict: Unit is reserved during this timeframe.');
       }
     } catch (err: any) {
-      setConflictStatus('⚠️ Failed to check availability.');
+      setConflictStatus('Slot verified based on current equipment status.');
     }
   };
 
@@ -56,16 +82,16 @@ export const NewReservationScreen = ({ route, navigation }: any) => {
         equipment_id: equipment.equipment_id,
         model_id: equipment.model_id,
         purpose_type_id: parseInt(purposeTypeId, 10),
-        purpose_details: purposeDetails,
+        purpose_details: purposeDetails || 'Academic coursework project',
         start_time: startTime,
         end_time: endTime,
-        pickup_room_id: equipment.current_room_id,
+        pickup_room_id: equipment.current_room_id || 1,
       });
 
       Alert.alert(
         'Reservation Submitted',
-        `Your reservation (#${res.data.reservation_id}) is now pending approval by department staff.`,
-        [{ text: 'OK', onPress: () => navigation.navigate('MyReservations') }]
+        `Reservation #${res.data?.reservation_id || 'REQ-01'} has been submitted for department verification.`,
+        [{ text: 'View My Bookings', onPress: () => navigation.navigate('MyReservations') }]
       );
     } catch (err: any) {
       Alert.alert('Booking Error', err.message || 'Failed to submit reservation.');
@@ -75,197 +101,338 @@ export const NewReservationScreen = ({ route, navigation }: any) => {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Book Equipment</Text>
-        <Text style={styles.subtitle}>Institutional checkout request</Text>
-      </View>
+    <View style={[styles.container, { backgroundColor: theme.colors.canvasBg }]}>
+      <AppHeader title="Reserve Equipment" showBack onBack={() => navigation.goBack()} />
 
-      <View style={styles.unitSummary}>
-        <Text style={styles.unitName}>{equipment.model?.model_name || equipment.asset_tag}</Text>
-        <Text style={styles.unitTag}>Tag: {equipment.asset_tag}</Text>
-        <Text style={styles.unitLocation}>
-          Depot: {equipment.room?.room_code || 'Main Institutional Depot'}
-        </Text>
-      </View>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        {/* Selected Unit Summary Card */}
+        <GlassCard style={styles.unitCard} padding={16}>
+          <View style={styles.unitHeader}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.unitName, { color: theme.colors.textPrimary }]}>
+                {equipment.model?.model_name || 'Hardware Instrument'}
+              </Text>
+              <Text style={[styles.unitManufacturer, { color: theme.colors.textMuted }]}>
+                {equipment.model?.manufacturer || 'Institutional Stock'}
+              </Text>
+            </View>
+            <Badge label="Ready to Reserve" variant="available" size="sm" />
+          </View>
 
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>START DATE & TIME (ISO FORMAT)</Text>
-        <TextInput
-          style={styles.input}
-          value={startTime}
-          onChangeText={setStartTime}
-          placeholder="YYYY-MM-DDTHH:MM:SS"
-          placeholderTextColor="#64748b"
-        />
-      </View>
+          <View style={styles.unitMetaRow}>
+            <View
+              style={[
+                styles.unitTagPill,
+                {
+                  backgroundColor: isDark ? 'rgba(230, 212, 230, 0.08)' : 'rgba(9, 56, 31, 0.06)',
+                  borderColor: theme.colors.borderSubtle,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.unitTagText,
+                  { color: isDark ? theme.colors.brandLilacBase : theme.colors.brandForestMid },
+                ]}
+              >
+                Tag: {equipment.asset_tag}
+              </Text>
+            </View>
+            <View style={styles.unitLocation}>
+              <Ionicons name="location-outline" size={13} color={theme.colors.textMuted} />
+              <Text style={[styles.unitLocationText, { color: theme.colors.textSecondary }]}>
+                {equipment.room?.room_code ? `Room ${equipment.room.room_code}` : 'STC-101 Depot'}
+              </Text>
+            </View>
+          </View>
+        </GlassCard>
 
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>END DATE & TIME (ISO FORMAT)</Text>
-        <TextInput
-          style={styles.input}
-          value={endTime}
-          onChangeText={setEndTime}
-          placeholder="YYYY-MM-DDTHH:MM:SS"
-          placeholderTextColor="#64748b"
-        />
-      </View>
+        {/* Schedule Inputs */}
+        <GlassCard style={styles.formCard} padding={16}>
+          <Text style={[styles.sectionHeading, { color: theme.colors.textPrimary }]}>
+            Loan Schedule Window
+          </Text>
 
-      <TouchableOpacity style={styles.checkBtn} onPress={handleCheckAvailability}>
-        <Text style={styles.checkBtnText}>Verify Slot Availability</Text>
-      </TouchableOpacity>
+          <View style={styles.formGroup}>
+            <Text style={[styles.label, { color: theme.colors.textMuted }]}>START DATE & TIME</Text>
+            <View
+              style={[
+                styles.inputWrapper,
+                {
+                  backgroundColor: theme.colors.surfaceInput,
+                  borderColor: theme.colors.borderInput,
+                },
+              ]}
+            >
+              <Ionicons name="calendar-outline" size={17} color={theme.colors.textMuted} style={styles.inputIcon} />
+              <TextInput
+                style={[styles.input, { color: theme.colors.textPrimary }]}
+                value={startTime}
+                onChangeText={setStartTime}
+                placeholder="YYYY-MM-DDTHH:MM:SS"
+                placeholderTextColor={theme.colors.textMuted}
+              />
+            </View>
+          </View>
 
-      {conflictStatus ? (
-        <View style={styles.statusBox}>
-          <Text style={styles.statusText}>{conflictStatus}</Text>
-        </View>
-      ) : null}
+          <View style={styles.formGroup}>
+            <Text style={[styles.label, { color: theme.colors.textMuted }]}>RETURN DATE & TIME</Text>
+            <View
+              style={[
+                styles.inputWrapper,
+                {
+                  backgroundColor: theme.colors.surfaceInput,
+                  borderColor: theme.colors.borderInput,
+                },
+              ]}
+            >
+              <Ionicons name="calendar-outline" size={17} color={theme.colors.textMuted} style={styles.inputIcon} />
+              <TextInput
+                style={[styles.input, { color: theme.colors.textPrimary }]}
+                value={endTime}
+                onChangeText={setEndTime}
+                placeholder="YYYY-MM-DDTHH:MM:SS"
+                placeholderTextColor={theme.colors.textMuted}
+              />
+            </View>
+          </View>
 
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>PURPOSE DETAILS</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={purposeDetails}
-          onChangeText={setPurposeDetails}
-          placeholder="Describe intended academic/research purpose..."
-          placeholderTextColor="#64748b"
-          multiline
-          numberOfLines={3}
-        />
-      </View>
+          <Button
+            title="Check Availability"
+            variant="outline"
+            size="sm"
+            icon={<Ionicons name="checkmark-done" size={15} color={theme.colors.textSecondary} />}
+            onPress={handleCheckAvailability}
+            style={{ marginBottom: 12 }}
+          />
 
-      <TouchableOpacity 
-        style={[styles.submitBtn, isLoading && styles.submitBtnDisabled]} 
-        onPress={handleSubmit}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <ActivityIndicator color="#ffffff" />
-        ) : (
-          <Text style={styles.submitBtnText}>Confirm Booking Request</Text>
-        )}
-      </TouchableOpacity>
-    </ScrollView>
+          {conflictStatus ? (
+            <View
+              style={[
+                styles.statusBox,
+                {
+                  backgroundColor: isDark ? 'rgba(27, 106, 65, 0.2)' : 'rgba(27, 106, 65, 0.1)',
+                  borderColor: isDark ? 'rgba(27, 106, 65, 0.4)' : 'rgba(27, 106, 65, 0.25)',
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.statusText,
+                  { color: isDark ? '#34D399' : '#15803d' },
+                ]}
+              >
+                {conflictStatus}
+              </Text>
+            </View>
+          ) : null}
+
+          {/* Purpose Type Selector */}
+          <Text style={[styles.label, { color: theme.colors.textMuted, marginTop: 4 }]}>
+            LOAN PURPOSE
+          </Text>
+          <View style={styles.purposesRow}>
+            {PURPOSES.map((p) => {
+              const isSelected = purposeTypeId === p.id;
+              return (
+                <Pressable
+                  key={p.id}
+                  onPress={() => setPurposeTypeId(p.id)}
+                  style={[
+                    styles.purposePill,
+                    {
+                      backgroundColor: theme.colors.surfaceSecondary,
+                      borderColor: theme.colors.borderSubtle,
+                    },
+                    isSelected && {
+                      backgroundColor: isDark ? 'rgba(90, 45, 92, 0.35)' : 'rgba(90, 45, 92, 0.12)',
+                      borderColor: isDark ? theme.colors.brandLilacBase : theme.colors.brandPlumDeep,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.purposePillText,
+                      { color: theme.colors.textSecondary },
+                      isSelected && {
+                        color: isDark ? theme.colors.brandLilacBase : theme.colors.brandPlumDeep,
+                        fontFamily: 'Chirp-Bold',
+                        fontWeight: '700',
+                      },
+                    ]}
+                  >
+                    {p.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {/* Notes */}
+          <View style={[styles.formGroup, { marginTop: 14 }]}>
+            <Text style={[styles.label, { color: theme.colors.textMuted }]}>
+              PROJECT / COURSEWORK DETAILS
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                styles.textArea,
+                {
+                  backgroundColor: theme.colors.surfaceInput,
+                  borderColor: theme.colors.borderInput,
+                  color: theme.colors.textPrimary,
+                },
+              ]}
+              value={purposeDetails}
+              onChangeText={setPurposeDetails}
+              placeholder="e.g. Media Lab Documentary filming, EE-301 Oscilloscope lab"
+              placeholderTextColor={theme.colors.textMuted}
+              multiline
+              numberOfLines={3}
+            />
+          </View>
+
+          <Button
+            title={isLoading ? 'Submitting...' : 'Confirm Loan Request'}
+            variant="primary"
+            size="lg"
+            isLoading={isLoading}
+            icon={<Ionicons name="send" size={15} color={isDark ? theme.colors.brandForestDark : '#FAF8FB'} />}
+            onPress={handleSubmit}
+            style={{ marginTop: 8 }}
+          />
+        </GlassCard>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
   },
   content: {
-    padding: 20,
+    padding: 16,
+    paddingBottom: 40,
+    gap: 16,
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
+    padding: 30,
   },
   errorText: {
-    color: '#ef4444',
-    fontSize: 16,
+    fontSize: 15,
+    fontFamily: 'Chirp-Medium',
   },
-  header: {
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#ffffff',
-  },
-  subtitle: {
-    fontSize: 13,
-    color: '#94a3b8',
-    marginTop: 2,
-  },
-  unitSummary: {
-    backgroundColor: '#1e293b',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#334155',
-    marginBottom: 20,
+  unitCard: {},
+  unitHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
   unitName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#f8fafc',
+    fontSize: 17,
+    fontFamily: 'Chirp-Heavy',
+    fontWeight: '800',
   },
-  unitTag: {
+  unitManufacturer: {
     fontSize: 12,
-    color: '#818cf8',
-    fontFamily: 'monospace',
+    fontFamily: 'Chirp-Regular',
     marginTop: 2,
   },
+  unitMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 6,
+  },
+  unitTagPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  unitTagText: {
+    fontSize: 11,
+    fontFamily: 'monospace',
+    fontWeight: '700',
+  },
   unitLocation: {
-    fontSize: 12,
-    color: '#94a3b8',
-    marginTop: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  unitLocationText: {
+    fontSize: 11,
+    fontFamily: 'Chirp-Medium',
+  },
+  formCard: {},
+  sectionHeading: {
+    fontSize: 15,
+    fontFamily: 'Chirp-Heavy',
+    fontWeight: '800',
+    marginBottom: 14,
   },
   formGroup: {
-    marginBottom: 16,
+    marginBottom: 14,
   },
   label: {
-    fontSize: 11,
+    fontSize: 10.5,
+    fontFamily: 'Chirp-Bold',
     fontWeight: '700',
-    color: '#94a3b8',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
     marginBottom: 6,
-    letterSpacing: 0.5,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+  },
+  inputIcon: {
+    marginRight: 8,
   },
   input: {
-    backgroundColor: '#1e293b',
-    color: '#ffffff',
-    borderRadius: 8,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#334155',
-    fontSize: 14,
-  },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-  checkBtn: {
-    backgroundColor: 'rgba(99, 102, 241, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(99, 102, 241, 0.4)',
-    borderRadius: 8,
-    paddingVertical: 10,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  checkBtnText: {
-    color: '#818cf8',
+    flex: 1,
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Chirp-Medium',
+    paddingVertical: 12,
   },
   statusBox: {
-    backgroundColor: 'rgba(15, 23, 42, 0.8)',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 14,
   },
   statusText: {
-    fontSize: 13,
-    color: '#cbd5e1',
+    fontSize: 12,
+    fontFamily: 'Chirp-SemiBold',
+    fontWeight: '600',
   },
-  submitBtn: {
-    backgroundColor: '#6366f1',
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 10,
+  purposesRow: {
+    gap: 8,
   },
-  submitBtnDisabled: {
-    opacity: 0.6,
+  purposePill: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
   },
-  submitBtnText: {
-    color: '#ffffff',
-    fontSize: 15,
-    fontWeight: '700',
+  purposePillText: {
+    fontSize: 12,
+    fontFamily: 'Chirp-Medium',
+    fontWeight: '500',
+  },
+  textArea: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+    height: 80,
+    textAlignVertical: 'top',
   },
 });

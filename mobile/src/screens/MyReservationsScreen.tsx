@@ -1,20 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  View, 
-  Text, 
-  FlatList, 
-  TouchableOpacity, 
-  StyleSheet, 
-  ActivityIndicator, 
-  RefreshControl, 
-  Alert 
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  RefreshControl,
+  Alert,
+  Pressable,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { mobileReservationApi, Reservation } from '../api/reservations';
-import { useMobileAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+import { GlassCard } from '../components/GlassCard';
+import { Badge } from '../components/Badge';
+import { Button } from '../components/Button';
+import { AppHeader } from '../components/AppHeader';
 
-export const MyReservationsScreen = () => {
-  const { user, logout } = useMobileAuth();
+const STATUS_FILTERS = ['All', 'Active', 'Pending', 'Completed'];
+
+export const MyReservationsScreen = ({ navigation }: any) => {
+  const { theme, isDark } = useTheme();
   const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState('All');
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -41,104 +49,229 @@ export const MyReservationsScreen = () => {
 
   const handleCancel = (reservationId: number) => {
     Alert.alert(
-      'Cancel Reservation',
-      'Are you sure you want to cancel this equipment booking?',
+      'Cancel Loan Request',
+      `Are you sure you want to cancel reservation #${reservationId}?`,
       [
-        { text: 'No', style: 'cancel' },
-        { 
-          text: 'Yes, Cancel', 
+        { text: 'Keep Booking', style: 'cancel' },
+        {
+          text: 'Cancel Reservation',
           style: 'destructive',
           onPress: async () => {
             try {
               await mobileReservationApi.cancel(reservationId);
               fetchReservations();
             } catch (err: any) {
-              Alert.alert('Error', err.message || 'Failed to cancel reservation');
+              Alert.alert('Cancellation Error', err.message || 'Failed to cancel reservation');
             }
-          }
+          },
         },
       ]
     );
   };
 
+  const filteredList = reservations.filter((item) => {
+    if (selectedFilter === 'All') return true;
+    const statusName = item.status?.status_name?.toLowerCase() || '';
+    return statusName === selectedFilter.toLowerCase();
+  });
+
   const renderItem = ({ item }: { item: Reservation }) => {
     const equip = item.items?.[0]?.equipment;
-    const modelName = equip?.model?.model_name || 'Standard Unit';
+    const modelName = equip?.model?.model_name || `Reservation #${item.reservation_id}`;
     const status = item.status?.status_name || 'pending';
     const isPending = status === 'pending';
 
-    const getStatusStyle = () => {
-      switch (status) {
-        case 'approved': return styles.statusApproved;
-        case 'pending': return styles.statusPending;
-        case 'rejected': return styles.statusRejected;
-        case 'cancelled': return styles.statusCancelled;
-        default: return styles.statusPending;
+    const getBadgeVariant = (st: string) => {
+      switch (st) {
+        case 'active':
+        case 'approved':
+          return 'available';
+        case 'pending':
+          return 'pending';
+        case 'completed':
+          return 'completed';
+        case 'rejected':
+        case 'cancelled':
+          return 'rejected';
+        default:
+          return 'brand';
       }
     };
 
     return (
-      <View style={styles.card}>
+      <GlassCard style={styles.card} padding={16}>
         <View style={styles.cardHeader}>
-          <Text style={styles.bookingId}>Booking #{item.reservation_id}</Text>
-          <View style={[styles.statusBadge, getStatusStyle()]}>
-            <Text style={styles.statusText}>{status.toUpperCase()}</Text>
+          <View
+            style={[
+              styles.bookingIdPill,
+              {
+                backgroundColor: isDark ? 'rgba(230, 212, 230, 0.08)' : 'rgba(9, 56, 31, 0.06)',
+                borderColor: theme.colors.borderSubtle,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.bookingIdText,
+                { color: isDark ? theme.colors.brandLilacBase : theme.colors.brandForestMid },
+              ]}
+            >
+              #{item.reservation_id}
+            </Text>
           </View>
+          <Badge label={status} variant={getBadgeVariant(status)} size="sm" />
         </View>
 
-        <Text style={styles.equipmentTitle}>{modelName}</Text>
-        <Text style={styles.assetTag}>Tag: {equip?.asset_tag || 'Unassigned'}</Text>
+        <Text style={[styles.equipmentTitle, { color: theme.colors.textPrimary }]}>
+          {modelName}
+        </Text>
+        <Text style={[styles.assetTag, { color: theme.colors.textMuted }]}>
+          Tag: {equip?.asset_tag || `RES-${item.reservation_id}`}
+        </Text>
 
-        <View style={styles.dateBlock}>
-          <Text style={styles.dateLabel}>RESERVATION WINDOW:</Text>
-          <Text style={styles.dateValue}>
-            {item.requested_start_datetime ? new Date(item.requested_start_datetime).toLocaleDateString() : 'N/A'} — {item.requested_end_datetime ? new Date(item.requested_end_datetime).toLocaleDateString() : 'N/A'}
+        <View style={[styles.dateBlock, { borderTopColor: theme.colors.borderSubtle }]}>
+          <Ionicons name="calendar-outline" size={14} color={theme.colors.textMuted} />
+          <Text style={[styles.dateValue, { color: theme.colors.textSecondary }]}>
+            {item.requested_start_datetime
+              ? new Date(item.requested_start_datetime).toLocaleDateString(undefined, {
+                  month: 'short',
+                  day: 'numeric',
+                })
+              : 'N/A'}{' '}
+            –{' '}
+            {item.requested_end_datetime
+              ? new Date(item.requested_end_datetime).toLocaleDateString(undefined, {
+                  month: 'short',
+                  day: 'numeric',
+                })
+              : 'N/A'}
           </Text>
         </View>
 
-        {isPending ? (
-          <TouchableOpacity 
-            style={styles.cancelBtn} 
-            onPress={() => handleCancel(item.reservation_id)}
+        {item.purpose_details ? (
+          <View
+            style={[
+              styles.purposeBox,
+              {
+                backgroundColor: isDark ? 'rgba(9, 56, 31, 0.4)' : 'rgba(9, 56, 31, 0.06)',
+                borderColor: theme.colors.borderSubtle,
+              },
+            ]}
           >
-            <Text style={styles.cancelBtnText}>Cancel Booking</Text>
-          </TouchableOpacity>
+            <Text style={[styles.purposeText, { color: theme.colors.textMuted }]} numberOfLines={2}>
+              Purpose: {item.purpose_details}
+            </Text>
+          </View>
         ) : null}
-      </View>
+
+        {isPending ? (
+          <View style={styles.actionRow}>
+            <Button
+              title="Cancel Request"
+              variant="danger"
+              size="sm"
+              icon={<Ionicons name="close-circle-outline" size={14} color={isDark ? '#FB7185' : '#be123c'} />}
+              onPress={() => handleCancel(item.reservation_id)}
+            />
+          </View>
+        ) : null}
+      </GlassCard>
     );
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.userBanner}>
-        <View>
-          <Text style={styles.userName}>{user?.name || user?.email || 'Campus User'}</Text>
-          <Text style={styles.userSub}>Institutional Member</Text>
-        </View>
-        <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
-          <Text style={styles.logoutText}>Sign Out</Text>
-        </TouchableOpacity>
+    <View style={[styles.container, { backgroundColor: theme.colors.canvasBg }]}>
+      <AppHeader title="My Bookings" />
+
+      {/* Filter Tabs */}
+      <View
+        style={[
+          styles.filterSection,
+          {
+            backgroundColor: theme.colors.canvasBg,
+            borderBottomColor: theme.colors.borderSubtle,
+          },
+        ]}
+      >
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={STATUS_FILTERS}
+          keyExtractor={(item) => item}
+          contentContainerStyle={styles.filterContent}
+          renderItem={({ item }) => {
+            const isActive = selectedFilter === item;
+            return (
+              <Pressable
+                onPress={() => setSelectedFilter(item)}
+                style={[
+                  styles.filterChip,
+                  {
+                    backgroundColor: theme.colors.surfaceSecondary,
+                    borderColor: theme.colors.borderSubtle,
+                  },
+                  isActive && {
+                    backgroundColor: isDark ? 'rgba(90, 45, 92, 0.35)' : 'rgba(90, 45, 92, 0.12)',
+                    borderColor: isDark ? theme.colors.brandLilacBase : theme.colors.brandPlumDeep,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    { color: theme.colors.textSecondary },
+                    isActive && {
+                      color: isDark ? theme.colors.brandLilacBase : theme.colors.brandPlumDeep,
+                      fontFamily: 'Chirp-Bold',
+                      fontWeight: '700',
+                    },
+                  ]}
+                >
+                  {item}
+                </Text>
+              </Pressable>
+            );
+          }}
+        />
       </View>
 
       {isLoading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#6366f1" />
-          <Text style={styles.loadingText}>Loading your reservations...</Text>
+          <ActivityIndicator size="large" color={theme.colors.brandForestVivid} />
+          <Text style={[styles.loadingText, { color: theme.colors.textMuted }]}>
+            Fetching your reservation records...
+          </Text>
         </View>
       ) : (
         <FlatList
-          data={reservations}
+          data={filteredList}
           keyExtractor={(item) => item.reservation_id.toString()}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={isDark ? theme.colors.brandLilacBase : theme.colors.brandForestDark}
+            />
           }
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyTitle}>No Reservations</Text>
-              <Text style={styles.emptySubtitle}>You haven't booked any equipment yet.</Text>
-            </View>
+            <GlassCard style={styles.emptyContainer} padding={20}>
+              <Ionicons name="calendar-outline" size={38} color={theme.colors.textMuted} style={{ marginBottom: 8 }} />
+              <Text style={[styles.emptyTitle, { color: theme.colors.textPrimary }]}>No Reservations</Text>
+              <Text style={[styles.emptySubtitle, { color: theme.colors.textMuted }]}>
+                {selectedFilter === 'All'
+                  ? "You haven't requested any equipment yet. Explore the campus catalog to book gear."
+                  : `No ${selectedFilter.toLowerCase()} reservations on record.`}
+              </Text>
+              <Button
+                title="Browse Equipment Catalog"
+                variant="primary"
+                size="sm"
+                style={{ marginTop: 14 }}
+                onPress={() => navigation.navigate('CatalogTab')}
+              />
+            </GlassCard>
           }
         />
       )}
@@ -149,145 +282,115 @@ export const MyReservationsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
   },
-  userBanner: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#1e293b',
+  filterSection: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#334155',
   },
-  userName: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#ffffff',
+  filterContent: {
+    gap: 8,
   },
-  userSub: {
-    fontSize: 12,
-    color: '#94a3b8',
-  },
-  logoutBtn: {
-    paddingHorizontal: 12,
+  filterChip: {
+    paddingHorizontal: 14,
     paddingVertical: 6,
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    borderRadius: 6,
+    borderRadius: 9999,
+    borderWidth: 1,
   },
-  logoutText: {
-    color: '#ef4444',
-    fontSize: 12,
+  filterChipText: {
+    fontSize: 11,
+    fontFamily: 'Chirp-SemiBold',
     fontWeight: '600',
   },
   listContent: {
     padding: 16,
     gap: 12,
+    paddingBottom: 32,
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 30,
   },
   loadingText: {
-    color: '#94a3b8',
-    fontSize: 14,
+    fontSize: 13,
+    fontFamily: 'Chirp-Regular',
     marginTop: 12,
   },
   card: {
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#334155',
+    marginBottom: 4,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
-  bookingId: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#818cf8',
-    fontFamily: 'monospace',
-  },
-  statusBadge: {
+  bookingIdPill: {
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 999,
+    borderRadius: 6,
+    borderWidth: 1,
   },
-  statusApproved: {
-    backgroundColor: 'rgba(34, 197, 94, 0.15)',
-  },
-  statusPending: {
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
-  },
-  statusRejected: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-  },
-  statusCancelled: {
-    backgroundColor: 'rgba(100, 116, 139, 0.2)',
-  },
-  statusText: {
-    fontSize: 10,
+  bookingIdText: {
+    fontSize: 11,
+    fontFamily: 'monospace',
     fontWeight: '700',
-    color: '#ffffff',
   },
   equipmentTitle: {
-    fontSize: 16,
+    fontSize: 15,
+    fontFamily: 'Chirp-Bold',
     fontWeight: '700',
-    color: '#f8fafc',
   },
   assetTag: {
-    fontSize: 12,
-    color: '#94a3b8',
+    fontSize: 11,
+    fontFamily: 'monospace',
     marginTop: 2,
     marginBottom: 10,
   },
   dateBlock: {
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  dateLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#64748b',
-    marginBottom: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingTop: 8,
+    borderTopWidth: 1,
   },
   dateValue: {
-    fontSize: 12,
-    color: '#cbd5e1',
-    fontWeight: '500',
-  },
-  cancelBtn: {
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
-    borderRadius: 6,
-    paddingVertical: 8,
-    alignItems: 'center',
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-  },
-  cancelBtnText: {
-    color: '#ef4444',
-    fontSize: 12,
+    fontSize: 11,
+    fontFamily: 'Chirp-SemiBold',
     fontWeight: '600',
+  },
+  purposeBox: {
+    padding: 8,
+    borderRadius: 6,
+    marginTop: 8,
+    borderWidth: 1,
+  },
+  purposeText: {
+    fontSize: 11,
+    fontFamily: 'Chirp-Regular',
+    fontStyle: 'italic',
+  },
+  actionRow: {
+    marginTop: 12,
+    alignItems: 'flex-start',
   },
   emptyContainer: {
-    padding: 40,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
   },
   emptyTitle: {
-    color: '#f8fafc',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontFamily: 'Chirp-Bold',
+    fontWeight: '700',
   },
   emptySubtitle: {
-    color: '#64748b',
-    fontSize: 13,
+    fontSize: 12,
+    fontFamily: 'Chirp-Regular',
+    textAlign: 'center',
     marginTop: 4,
+    lineHeight: 18,
   },
 });

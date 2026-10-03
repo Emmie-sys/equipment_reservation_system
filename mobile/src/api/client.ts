@@ -7,6 +7,8 @@
 import Constants from 'expo-constants';
 import { getAuthToken, clearAuthToken } from '../utils/storage';
 
+declare const process: any;
+
 /**
  * Dynamically resolves the backend base URL.
  *

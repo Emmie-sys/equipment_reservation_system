@@ -5,6 +5,7 @@ export interface Equipment {
   model_id: number;
   asset_tag: string;
   serial_number?: string;
+  condition_notes?: string;
   is_bookable: boolean;
   status?: {
     status_id: number;

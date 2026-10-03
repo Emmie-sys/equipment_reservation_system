@@ -1,20 +1,27 @@
 {
   "expo": {
-    "name": "EquipReserve Mobile",
+    "name": "RESERViT",
     "slug": "equipreserve-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "dark",
-    "splash": {
-      "backgroundColor": "#0f172a"
-    },
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#05130A",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.reservit.mobile"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0f172a"
-      }
-    }
+        "backgroundColor": "#09381F"
+      },
+      "package": "com.reservit.mobile"
+    },
+    "androidStatusBar": {
+      "translucent": true,
+      "backgroundColor": "#00000000"
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }

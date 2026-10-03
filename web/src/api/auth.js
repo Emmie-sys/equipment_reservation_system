@@ -5,4 +5,5 @@ export const authApi = {
   logout: () => apiClient('/auth/logout', { method: 'POST' }),
   getCurrentUser: () => apiClient('/auth/me'),
   refresh: () => apiClient('/auth/refresh', { method: 'POST' }),
+  changePassword: (data) => apiClient('/auth/change-password', { method: 'POST', body: data }),
 };

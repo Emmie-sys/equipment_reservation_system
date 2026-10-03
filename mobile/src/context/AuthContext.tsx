@@ -2,10 +2,12 @@ import React, { createContext, useState, useContext } from 'react';
 import { setAuthToken, clearAuthToken } from '../utils/storage';
 
 interface User {
-  id: string;
-  name: string;
+  id: string | number;
+  name?: string;
+  first_name?: string;
+  last_name?: string;
   email: string;
-  role: string;
+  role?: string;
 }
 
 interface AuthContextType {

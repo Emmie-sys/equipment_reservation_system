@@ -5,6 +5,8 @@ import DashboardView from '../features/dashboard/DashboardView';
 import EquipmentCatalogPage from '../features/equipment/EquipmentCatalogPage';
 import ReservationsPage from '../features/reservations/ReservationsPage';
 import LoginPage from '../features/auth/LoginPage';
+import StyleGuidePage from '../features/styleguide/StyleGuidePage';
+import ProfilePage from '../features/profile/ProfilePage';
 
 export default function AppRoutes() {
   return (
@@ -34,6 +36,23 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute>
             <ReservationsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route path="/styleguide"
+        element={
+          <ProtectedRoute>
+            <StyleGuidePage />
           </ProtectedRoute>
         }
       />

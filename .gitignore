@@ -27,6 +27,9 @@ web/dist/
 web/dist-ssr/
 *.local
 
+# Agents
+.agents/
+
 # React Native / Mobile
 mobile/.expo/
 mobile/.bundle/
