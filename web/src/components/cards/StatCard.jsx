@@ -27,16 +27,32 @@ export default function StatCard({
     cyan: 'stat-icon-cyan',
   }[colorVariant] || 'stat-icon-emerald';
 
-  const sparklineStroke = {
-    emerald: '#34D399',
-    forest: '#34D399',
-    plum: '#E6D4E6',
-    lilac: '#E6D4E6',
+  // Explicit icon colors — prevents invisible icons when CSS inheritance breaks
+  const iconColor = {
+    emerald: '#5EC4BE',
+    forest: '#5EC4BE',
+    teal: '#5EC4BE',
+    plum: '#F47D3E',
+    lilac: '#F47D3E',
+    orange: '#F26419',
     neutral: '#CBD5E1',
-    brand: '#34D399',
+    brand: '#5EC4BE',
+    amber: '#FCD34D',
+    cyan: '#67E8F9',
+  }[colorVariant] || '#5EC4BE';
+
+  const sparklineStroke = {
+    emerald: '#5EC4BE',
+    forest: '#5EC4BE',
+    teal: '#5EC4BE',
+    plum: '#F47D3E',
+    lilac: '#F47D3E',
+    orange: '#F26419',
+    neutral: '#CBD5E1',
+    brand: '#5EC4BE',
     amber: '#fbbf24',
-    cyan: '#34D399',
-  }[colorVariant] || '#34D399';
+    cyan: '#5EC4BE',
+  }[colorVariant] || '#5EC4BE';
 
   // Render a mini SVG sparkline if data array provided
   const renderSparkline = () => {
@@ -82,7 +98,7 @@ export default function StatCard({
         <span className="stat-label">{label}</span>
         {Icon && (
           <div className={`stat-icon-wrapper ${iconVariantClass}`}>
-            <Icon size={20} />
+            <Icon size={20} color={iconColor} />
           </div>
         )}
       </div>

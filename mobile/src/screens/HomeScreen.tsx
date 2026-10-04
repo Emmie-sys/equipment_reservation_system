@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   ScrollView,
   RefreshControl,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -17,6 +18,7 @@ import { StatCard } from '../components/StatCard';
 import { Badge } from '../components/Badge';
 import { Button } from '../components/Button';
 import { AppHeader } from '../components/AppHeader';
+import { SmoothReveal } from '../components/SmoothReveal';
 
 export const HomeScreen = ({ navigation }: any) => {
   const { user } = useMobileAuth();
@@ -55,6 +57,32 @@ export const HomeScreen = ({ navigation }: any) => {
   const activeLoans = reservations.filter((r) => r.status?.status_name === 'active');
   const pendingRequests = reservations.filter((r) => r.status?.status_name === 'pending');
 
+  // Apple HIG staggered card entrance animations
+  const cardAnims = useRef([0, 1, 2, 3].map(() => new Animated.Value(0))).current;
+  const cardSlides = useRef([0, 1, 2, 3].map(() => new Animated.Value(16))).current;
+
+  useEffect(() => {
+    const animations = cardAnims.map((anim, i) =>
+      Animated.parallel([
+        Animated.spring(anim, {
+          toValue: 1,
+          delay: i * 65,
+          useNativeDriver: true,
+          speed: 18,
+          bounciness: 5,
+        }),
+        Animated.spring(cardSlides[i], {
+          toValue: 0,
+          delay: i * 65,
+          useNativeDriver: true,
+          speed: 18,
+          bounciness: 5,
+        }),
+      ])
+    );
+    Animated.stagger(60, animations).start();
+  }, []);
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.canvasBg }]}>
       <AppHeader />
@@ -70,79 +98,113 @@ export const HomeScreen = ({ navigation }: any) => {
           />
         }
       >
-        {/* Welcome Greeting Banner (Solid, Zero Gradient) */}
-        <GlassCard style={styles.welcomeBanner} padding={16}>
-          <View style={styles.badgeRow}>
-            <Badge label="Campus Equipment Portal" variant="brand" size="sm" />
-            <Badge label="Instant Mobile Loans" variant="lilac" size="sm" />
-          </View>
+        {/* Welcome Greeting Banner (Smooth Reveal) */}
+        <SmoothReveal delay={0} distance={12} scale={true}>
+          <GlassCard style={styles.welcomeBanner} padding={16}>
+            <View style={styles.badgeRow}>
+              <Badge label="Campus Equipment Portal" variant="brand" size="sm" />
+              <Badge label="Instant Mobile Loans" variant="lilac" size="sm" />
+            </View>
 
-          <Text style={[styles.greetingTitle, { color: theme.colors.textPrimary }]}>
-            Hi, {user?.first_name || 'Alex'}!
-          </Text>
-          <Text style={[styles.greetingSubtitle, { color: theme.colors.textSecondary }]}>
-            Reserve cameras, audio gear, lab sensors, and laptops with zero checkout friction.
-          </Text>
+            <Text style={[styles.greetingTitle, { color: theme.colors.textPrimary }]}>
+              Hi, {user?.first_name || 'Alex'}!
+            </Text>
+            <Text style={[styles.greetingSubtitle, { color: theme.colors.textSecondary }]}>
+              Reserve cameras, audio gear, lab sensors, and laptops with zero checkout friction.
+            </Text>
 
-          <View style={styles.actionButtons}>
-            <Button
-              title="Browse Catalog"
-              variant="primary"
-              size="sm"
-              icon={<Ionicons name="search" size={14} color={isDark ? theme.colors.brandForestDark : '#FAF8FB'} />}
-              onPress={() => navigation.navigate('CatalogTab')}
-            />
-            <Button
-              title="My Bookings"
-              variant="secondary"
-              size="sm"
-              icon={<Ionicons name="calendar-outline" size={14} color={theme.colors.textPrimary} />}
-              onPress={() => navigation.navigate('MyReservations')}
-            />
-          </View>
-        </GlassCard>
+            <View style={styles.actionButtons}>
+              <Button
+                title="Browse Catalog"
+                variant="primary"
+                size="sm"
+                icon={<Ionicons name="search" size={14} color={isDark ? theme.colors.brandForestDark : '#FAF8FB'} />}
+                onPress={() => navigation.navigate('CatalogTab')}
+              />
+              <Button
+                title="My Bookings"
+                variant="secondary"
+                size="sm"
+                icon={<Ionicons name="calendar-outline" size={14} color={theme.colors.textPrimary} />}
+                onPress={() => navigation.navigate('MyReservations')}
+              />
+            </View>
+          </GlassCard>
+        </SmoothReveal>
 
-        {/* KPI StatCards Grid (Cohesive Icons, Zero Gradient) */}
+        {/* KPI StatCards Grid with Apple HIG Staggered Reveal Animation */}
         <View style={styles.statsGrid}>
           <View style={styles.statsRow}>
-            <StatCard
-              label="Active Loans"
-              value={activeLoans.length}
-              icon={<Ionicons name="checkmark-circle-outline" size={18} color={isDark ? '#34D399' : '#15803d'} />}
-              trend={activeLoans.length > 0 ? "In student custody" : "No current loans"}
-              trendType={activeLoans.length > 0 ? "up" : "neutral"}
-              variant="forest"
-              onPress={() => navigation.navigate('MyReservations')}
-            />
-            <StatCard
-              label="Pending"
-              value={pendingRequests.length}
-              icon={<Ionicons name="time-outline" size={18} color={isDark ? theme.colors.brandLilacBase : '#5A2D5C'} />}
-              trend={pendingRequests.length > 0 ? "Awaiting review" : "Queue clear"}
-              trendType={pendingRequests.length > 0 ? "warning" : "neutral"}
-              variant="lilac"
-              onPress={() => navigation.navigate('MyReservations')}
-            />
+            <Animated.View
+              style={{
+                flex: 1,
+                opacity: cardAnims[0],
+                transform: [{ translateY: cardSlides[0] }],
+              }}
+            >
+              <StatCard
+                label="Active Loans"
+                value={activeLoans.length}
+                icon={<Ionicons name="checkmark-circle-outline" size={18} color={theme.colors.icons.forest.color} />}
+                trend={activeLoans.length > 0 ? "In student custody" : "No current loans"}
+                trendType={activeLoans.length > 0 ? "up" : "neutral"}
+                variant="forest"
+                onPress={() => navigation.navigate('MyReservations')}
+              />
+            </Animated.View>
+            <Animated.View
+              style={{
+                flex: 1,
+                opacity: cardAnims[1],
+                transform: [{ translateY: cardSlides[1] }],
+              }}
+            >
+              <StatCard
+                label="Pending"
+                value={pendingRequests.length}
+                icon={<Ionicons name="time-outline" size={18} color={theme.colors.icons.lilac.color} />}
+                trend={pendingRequests.length > 0 ? "Awaiting review" : "Queue clear"}
+                trendType={pendingRequests.length > 0 ? "warning" : "neutral"}
+                variant="lilac"
+                onPress={() => navigation.navigate('MyReservations')}
+              />
+            </Animated.View>
           </View>
 
           <View style={styles.statsRow}>
-            <StatCard
-              label="Campus Units"
-              value={equipmentCount}
-              icon={<Ionicons name="cube-outline" size={18} color={isDark ? '#34D399' : '#15803d'} />}
-              trend="Ready for reservation"
-              trendType="up"
-              variant="forest"
-              onPress={() => navigation.navigate('CatalogTab')}
-            />
-            <StatCard
-              label="Pickup Depot"
-              value="STC-101"
-              icon={<Ionicons name="location-outline" size={18} color={isDark ? '#CBD5E1' : '#475569'} />}
-              trend="Science & Tech Desk"
-              trendType="neutral"
-              variant="neutral"
-            />
+            <Animated.View
+              style={{
+                flex: 1,
+                opacity: cardAnims[2],
+                transform: [{ translateY: cardSlides[2] }],
+              }}
+            >
+              <StatCard
+                label="Campus Units"
+                value={equipmentCount}
+                icon={<Ionicons name="cube-outline" size={18} color={theme.colors.icons.forest.color} />}
+                trend="Ready for reservation"
+                trendType="up"
+                variant="forest"
+                onPress={() => navigation.navigate('CatalogTab')}
+              />
+            </Animated.View>
+            <Animated.View
+              style={{
+                flex: 1,
+                opacity: cardAnims[3],
+                transform: [{ translateY: cardSlides[3] }],
+              }}
+            >
+              <StatCard
+                label="Pickup Depot"
+                value="STC-101"
+                icon={<Ionicons name="location-outline" size={18} color={theme.colors.icons.neutral.color} />}
+                trend="Science & Tech Desk"
+                trendType="neutral"
+                variant="neutral"
+              />
+            </Animated.View>
           </View>
         </View>
 
@@ -161,32 +223,34 @@ export const HomeScreen = ({ navigation }: any) => {
             <ActivityIndicator color={theme.colors.brandForestVivid} />
           </View>
         ) : activeLoans.length > 0 ? (
-          activeLoans.map((loan) => (
-            <GlassCard key={loan.reservation_id} style={styles.loanCard} padding={12}>
-              <View style={styles.loanHeader}>
-                <View style={styles.loanInfo}>
-                  <Text style={[styles.loanTitle, { color: theme.colors.textPrimary }]}>
-                    {loan.items?.[0]?.equipment?.model?.model_name || `Reservation #${loan.reservation_id}`}
-                  </Text>
-                  <Text style={[styles.loanTag, { color: theme.colors.textMuted }]}>
-                    Tag: {loan.items?.[0]?.equipment?.asset_tag || `RES-${loan.reservation_id}`}
+          activeLoans.map((loan, idx) => (
+            <SmoothReveal key={loan.reservation_id} delay={Math.min(idx, 6) * 55} distance={10}>
+              <GlassCard style={styles.loanCard} padding={12}>
+                <View style={styles.loanHeader}>
+                  <View style={styles.loanInfo}>
+                    <Text style={[styles.loanTitle, { color: theme.colors.textPrimary }]}>
+                      {loan.items?.[0]?.equipment?.model?.model_name || `Reservation #${loan.reservation_id}`}
+                    </Text>
+                    <Text style={[styles.loanTag, { color: theme.colors.textMuted }]}>
+                      Tag: {loan.items?.[0]?.equipment?.asset_tag || `RES-${loan.reservation_id}`}
+                    </Text>
+                  </View>
+                  <Badge label="Active Loan" variant="available" size="sm" />
+                </View>
+
+                <View style={[styles.loanMeta, { borderTopColor: theme.colors.borderSubtle }]}>
+                  <Ionicons name="calendar-outline" size={13} color={theme.colors.textMuted} />
+                  <Text style={[styles.loanMetaText, { color: theme.colors.textSecondary }]}>
+                    Due: {new Date(loan.requested_end_datetime).toLocaleDateString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
                   </Text>
                 </View>
-                <Badge label="Active Loan" variant="available" size="sm" />
-              </View>
-
-              <View style={[styles.loanMeta, { borderTopColor: theme.colors.borderSubtle }]}>
-                <Ionicons name="calendar-outline" size={13} color={theme.colors.textMuted} />
-                <Text style={[styles.loanMetaText, { color: theme.colors.textSecondary }]}>
-                  Due: {new Date(loan.requested_end_datetime).toLocaleDateString(undefined, {
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </Text>
-              </View>
-            </GlassCard>
+              </GlassCard>
+            </SmoothReveal>
           ))
         ) : (
           <GlassCard style={styles.emptyBox} padding={20}>

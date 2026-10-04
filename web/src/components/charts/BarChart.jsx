@@ -9,7 +9,7 @@ export default function BarChart({
   xKey = 'label',
   yKey = 'value',
   height = 200,
-  barColor = '#1B6A41',
+  barColor = '#006B65',
   className = '',
 }) {
   if (!data || data.length === 0) {

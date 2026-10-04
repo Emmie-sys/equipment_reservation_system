@@ -7,6 +7,7 @@ import ReservationsPage from '../features/reservations/ReservationsPage';
 import LoginPage from '../features/auth/LoginPage';
 import StyleGuidePage from '../features/styleguide/StyleGuidePage';
 import ProfilePage from '../features/profile/ProfilePage';
+import NotificationsPage from '../features/notifications/NotificationsPage';
 
 export default function AppRoutes() {
   return (
@@ -45,6 +46,15 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute>
             <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute>
+            <NotificationsPage />
           </ProtectedRoute>
         }
       />

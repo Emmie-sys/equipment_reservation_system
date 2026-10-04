@@ -9,7 +9,7 @@ export default function LineChart({
   xKey = 'label',
   yKey = 'value',
   height = 200,
-  strokeColor = '#1B6A41',
+  strokeColor = '#006B65',
   fillArea = true,
   fillGradient = true, // for backwards-compatibility
   className = '',

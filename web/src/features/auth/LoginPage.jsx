@@ -128,14 +128,14 @@ export default function LoginPage() {
         {/* Left Side: Branded Visual Experience */}
         <div
           style={{
-            background: '#09381F',
-            borderRight: '1px solid rgba(230, 212, 230, 0.15)',
+            background: '#004643',
+            borderRight: '1px solid rgba(240, 237, 229, 0.15)',
             padding: '3rem 2.5rem',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
             position: 'relative',
-            color: '#FAF8FB',
+            color: '#F0EDE5',
           }}
         >
           <div style={{ position: 'relative', zIndex: 1 }}>
@@ -163,25 +163,25 @@ export default function LoginPage() {
                   />
                   <path
                     d="M8 12L11 15L17 9"
-                    stroke="#E6D4E6"
+                    stroke="#F0EDE5"
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
-                  <circle cx="12" cy="12" r="1.5" fill="#34D399" />
+                  <circle cx="12" cy="12" r="1.5" fill="#F26419" />
                 </svg>
               </div>
               <div>
-                <h2 style={{ fontSize: '1.45rem', fontWeight: 800, letterSpacing: '-0.025em', color: '#FAF8FB' }}>
-                  RESERV<span style={{ color: '#E6D4E6' }}>iT</span>
+                <h2 style={{ fontSize: '1.45rem', fontWeight: 800, letterSpacing: '-0.025em', color: '#F0EDE5' }}>
+                  RESERV<span style={{ color: '#F26419' }}>iT</span>
                 </h2>
-                <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(230, 212, 230, 0.85)', fontWeight: 600 }}>
+                <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(240, 237, 229, 0.85)', fontWeight: 600 }}>
                   Equipment Reservation System
                 </p>
               </div>
             </div>
 
-            <h1 style={{ fontSize: '1.95rem', fontWeight: 800, lineHeight: 1.25, color: '#FAF8FB', marginBottom: '1rem' }}>
+            <h1 style={{ fontSize: '1.95rem', fontWeight: 800, lineHeight: 1.25, color: '#F0EDE5', marginBottom: '1rem' }}>
               Precision hardware access for academic excellence.
             </h1>
             <p style={{ fontSize: '0.925rem', color: 'rgba(250, 248, 251, 0.82)', lineHeight: 1.6 }}>
@@ -190,12 +190,12 @@ export default function LoginPage() {
           </div>
 
           <div style={{ position: 'relative', zIndex: 1, marginTop: '2.5rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.825rem', color: 'rgba(250, 248, 251, 0.9)' }}>
-              <CheckCircle2 size={16} color="#34D399" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.825rem', color: 'rgba(240, 237, 229, 0.92)' }}>
+              <CheckCircle2 size={16} color="#F26419" />
               <span>Automated conflict avoidance & scheduling</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.825rem', color: 'rgba(250, 248, 251, 0.9)' }}>
-              <CheckCircle2 size={16} color="#34D399" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.825rem', color: 'rgba(240, 237, 229, 0.92)' }}>
+              <CheckCircle2 size={16} color="#F26419" />
               <span>Role-governed approval and dispatch workflows</span>
             </div>
           </div>
@@ -319,8 +319,8 @@ export default function LoginPage() {
                       padding: '0.65rem 0.85rem',
                       textAlign: 'left',
                       cursor: 'pointer',
-                      border: isSelected ? '1px solid var(--brand-forest-vivid)' : '1px solid var(--glass-border-subtle)',
-                      background: isSelected ? 'var(--brand-forest-dim)' : 'var(--glass-surface-secondary)',
+                      border: isSelected ? '1px solid var(--brand-teal-vivid)' : '1px solid var(--glass-border-subtle)',
+                      background: isSelected ? 'var(--brand-teal-dim)' : 'var(--glass-surface-secondary)',
                       transition: 'all var(--transition-fast)',
                     }}
                   >

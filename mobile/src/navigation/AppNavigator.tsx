@@ -12,6 +12,8 @@ import { HomeScreen } from '../screens/HomeScreen';
 import { EquipmentCatalogScreen } from '../screens/EquipmentCatalogScreen';
 import { MyReservationsScreen } from '../screens/MyReservationsScreen';
 import { NewReservationScreen } from '../screens/NewReservationScreen';
+import { ProfileScreen } from '../screens/ProfileScreen';
+import { NotificationListScreen } from '../screens/NotificationListScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -54,7 +56,7 @@ function MainTabs() {
           paddingBottom: Math.max(insets.bottom, 8),
           paddingTop: 6,
         },
-        tabBarActiveTintColor: isDark ? '#34D399' : '#155E38',
+        tabBarActiveTintColor: isDark ? '#2DD4BF' : '#004643',
         tabBarInactiveTintColor: theme.colors.textMuted,
         tabBarLabelStyle: {
           fontSize: 11,
@@ -106,6 +108,20 @@ function MainTabs() {
           ),
         }}
       />
+      <Tab.Screen
+        name="ProfileTab"
+        component={ProfileScreen}
+        options={{
+          title: 'Account',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? 'person' : 'person-outline'}
+              size={22}
+              color={color}
+            />
+          ),
+        }}
+      />
     </Tab.Navigator>
   );
 }
@@ -145,7 +161,17 @@ export const AppNavigator = () => {
         }}
       >
         {isAuthenticated ? (
-          <Stack.Screen name="Main" component={MainTabs} />
+          <>
+            <Stack.Screen name="Main" component={MainTabs} />
+            <Stack.Screen
+              name="Notifications"
+              component={NotificationListScreen}
+              options={{
+                animation: 'slide_from_right',
+                gestureEnabled: true,
+              }}
+            />
+          </>
         ) : (
           <Stack.Screen name="Login" component={LoginScreen} />
         )}

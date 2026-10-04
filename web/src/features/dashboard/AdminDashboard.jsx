@@ -174,9 +174,9 @@ export default function AdminDashboard() {
   ];
 
   const utilizationData = [
-    { label: 'Available', value: stats?.available_equipment ?? 114, color: '#1B6A41' },
+    { label: 'Available', value: stats?.available_equipment ?? 114, color: '#006B65' },
     { label: 'Active Loans', value: stats?.active_reservations ?? 28, color: '#38bdf8' },
-    { label: 'Maintenance', value: stats?.in_maintenance ?? 6, color: '#5A2D5C' },
+    { label: 'Maintenance', value: stats?.in_maintenance ?? 6, color: '#F26419' },
   ];
 
   const activityData = [
@@ -314,7 +314,7 @@ export default function AdminDashboard() {
 
           <GlassCard padding="1.5rem">
             <h4 style={{ marginBottom: '0.75rem' }}>Weekly Reservation Velocity</h4>
-            <LineChart data={activityData} height={160} strokeColor="#1B6A41" />
+            <LineChart data={activityData} height={160} strokeColor="#006B65" />
           </GlassCard>
         </div>
       </div>

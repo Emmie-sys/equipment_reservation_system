@@ -16,6 +16,7 @@ import { GlassCard } from '../components/GlassCard';
 import { Badge } from '../components/Badge';
 import { Button } from '../components/Button';
 import { AppHeader } from '../components/AppHeader';
+import { SmoothReveal } from '../components/SmoothReveal';
 
 const STATUS_FILTERS = ['All', 'Active', 'Pending', 'Completed'];
 
@@ -75,7 +76,7 @@ export const MyReservationsScreen = ({ navigation }: any) => {
     return statusName === selectedFilter.toLowerCase();
   });
 
-  const renderItem = ({ item }: { item: Reservation }) => {
+  const renderItem = ({ item, index }: { item: Reservation; index: number }) => {
     const equip = item.items?.[0]?.equipment;
     const modelName = equip?.model?.model_name || `Reservation #${item.reservation_id}`;
     const status = item.status?.status_name || 'pending';
@@ -91,7 +92,7 @@ export const MyReservationsScreen = ({ navigation }: any) => {
         case 'completed':
           return 'completed';
         case 'rejected':
-        case 'cancelled':
+          case 'cancelled':
           return 'rejected';
         default:
           return 'brand';
@@ -99,83 +100,85 @@ export const MyReservationsScreen = ({ navigation }: any) => {
     };
 
     return (
-      <GlassCard style={styles.card} padding={16}>
-        <View style={styles.cardHeader}>
-          <View
-            style={[
-              styles.bookingIdPill,
-              {
-                backgroundColor: isDark ? 'rgba(230, 212, 230, 0.08)' : 'rgba(9, 56, 31, 0.06)',
-                borderColor: theme.colors.borderSubtle,
-              },
-            ]}
-          >
-            <Text
+      <SmoothReveal delay={Math.min(index, 7) * 45} distance={10}>
+        <GlassCard style={styles.card} padding={16}>
+          <View style={styles.cardHeader}>
+            <View
               style={[
-                styles.bookingIdText,
-                { color: isDark ? theme.colors.brandLilacBase : theme.colors.brandForestMid },
+                styles.bookingIdPill,
+                {
+                  backgroundColor: isDark ? 'rgba(230, 212, 230, 0.08)' : 'rgba(9, 56, 31, 0.06)',
+                  borderColor: theme.colors.borderSubtle,
+                },
               ]}
             >
-              #{item.reservation_id}
-            </Text>
+              <Text
+                style={[
+                  styles.bookingIdText,
+                  { color: isDark ? theme.colors.brandLilacBase : theme.colors.brandForestMid },
+                ]}
+              >
+                #{item.reservation_id}
+              </Text>
+            </View>
+            <Badge label={status} variant={getBadgeVariant(status)} size="sm" />
           </View>
-          <Badge label={status} variant={getBadgeVariant(status)} size="sm" />
-        </View>
 
-        <Text style={[styles.equipmentTitle, { color: theme.colors.textPrimary }]}>
-          {modelName}
-        </Text>
-        <Text style={[styles.assetTag, { color: theme.colors.textMuted }]}>
-          Tag: {equip?.asset_tag || `RES-${item.reservation_id}`}
-        </Text>
-
-        <View style={[styles.dateBlock, { borderTopColor: theme.colors.borderSubtle }]}>
-          <Ionicons name="calendar-outline" size={14} color={theme.colors.textMuted} />
-          <Text style={[styles.dateValue, { color: theme.colors.textSecondary }]}>
-            {item.requested_start_datetime
-              ? new Date(item.requested_start_datetime).toLocaleDateString(undefined, {
-                  month: 'short',
-                  day: 'numeric',
-                })
-              : 'N/A'}{' '}
-            –{' '}
-            {item.requested_end_datetime
-              ? new Date(item.requested_end_datetime).toLocaleDateString(undefined, {
-                  month: 'short',
-                  day: 'numeric',
-                })
-              : 'N/A'}
+          <Text style={[styles.equipmentTitle, { color: theme.colors.textPrimary }]}>
+            {modelName}
           </Text>
-        </View>
+          <Text style={[styles.assetTag, { color: theme.colors.textMuted }]}>
+            Tag: {equip?.asset_tag || `RES-${item.reservation_id}`}
+          </Text>
 
-        {item.purpose_details ? (
-          <View
-            style={[
-              styles.purposeBox,
-              {
-                backgroundColor: isDark ? 'rgba(9, 56, 31, 0.4)' : 'rgba(9, 56, 31, 0.06)',
-                borderColor: theme.colors.borderSubtle,
-              },
-            ]}
-          >
-            <Text style={[styles.purposeText, { color: theme.colors.textMuted }]} numberOfLines={2}>
-              Purpose: {item.purpose_details}
+          <View style={[styles.dateBlock, { borderTopColor: theme.colors.borderSubtle }]}>
+            <Ionicons name="calendar-outline" size={14} color={theme.colors.textMuted} />
+            <Text style={[styles.dateValue, { color: theme.colors.textSecondary }]}>
+              {item.requested_start_datetime
+                ? new Date(item.requested_start_datetime).toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                  })
+                : 'N/A'}{' '}
+              –{' '}
+              {item.requested_end_datetime
+                ? new Date(item.requested_end_datetime).toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                  })
+                : 'N/A'}
             </Text>
           </View>
-        ) : null}
 
-        {isPending ? (
-          <View style={styles.actionRow}>
-            <Button
-              title="Cancel Request"
-              variant="danger"
-              size="sm"
-              icon={<Ionicons name="close-circle-outline" size={14} color={isDark ? '#FB7185' : '#be123c'} />}
-              onPress={() => handleCancel(item.reservation_id)}
-            />
-          </View>
-        ) : null}
-      </GlassCard>
+          {item.purpose_details ? (
+            <View
+              style={[
+                styles.purposeBox,
+                {
+                  backgroundColor: isDark ? 'rgba(9, 56, 31, 0.4)' : 'rgba(9, 56, 31, 0.06)',
+                  borderColor: theme.colors.borderSubtle,
+                },
+              ]}
+            >
+              <Text style={[styles.purposeText, { color: theme.colors.textMuted }]} numberOfLines={2}>
+                Purpose: {item.purpose_details}
+              </Text>
+            </View>
+          ) : null}
+
+          {isPending ? (
+            <View style={styles.actionRow}>
+              <Button
+                title="Cancel Request"
+                variant="danger"
+                size="sm"
+                icon={<Ionicons name="close-circle-outline" size={14} color={isDark ? '#FB7185' : '#be123c'} />}
+                onPress={() => handleCancel(item.reservation_id)}
+              />
+            </View>
+          ) : null}
+        </GlassCard>
+      </SmoothReveal>
     );
   };
 

@@ -18,15 +18,18 @@ import {
   GraduationCap,
   Sparkles,
   UserCircle2,
+  Bell,
 } from 'lucide-react';
 import { useAuthContext } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useNotifications } from '../../context/NotificationContext';
 
 export default function AppShell({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, isAuthenticated } = useAuthContext();
   const { theme, toggleTheme } = useTheme();
+  const { unreadCount } = useNotifications();
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -55,6 +58,7 @@ export default function AppShell({ children }) {
     { to: '/', label: 'Overview', icon: LayoutDashboard },
     { to: '/catalog', label: 'Equipment Catalog', icon: Boxes },
     { to: '/reservations', label: 'Reservations', icon: CalendarCheck },
+    { to: '/notifications', label: 'Notifications', icon: Bell },
     { to: '/profile', label: 'My Profile', icon: UserCircle2 },
     { to: '/styleguide', label: 'Design System', icon: Palette },
   ];
@@ -90,12 +94,12 @@ export default function AppShell({ children }) {
                 />
                 <path
                   d="M8 12L11 15L17 9"
-                  stroke="#E6D4E6"
+                  stroke="#F0EDE5"
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
-                <circle cx="12" cy="12" r="1.5" fill="#1B6A41" />
+                <circle cx="12" cy="12" r="1.5" fill="#F26419" />
               </svg>
             </div>
 
@@ -127,6 +131,7 @@ export default function AppShell({ children }) {
           {navItems.map((item) => {
             const isActive = location.pathname === item.to;
             const Icon = item.icon;
+            const isNotif = item.to === '/notifications';
             return (
               <Link
                 key={item.to}
@@ -134,14 +139,43 @@ export default function AppShell({ children }) {
                 onClick={() => setMobileOpen(false)}
                 className={`nav-link-item ${isActive ? 'active' : ''}`}
                 title={isCollapsed ? item.label : undefined}
+                style={{ position: 'relative' }}
               >
-                <div className="nav-link-icon">
+                <div className="nav-link-icon" style={{ position: 'relative' }}>
                   <Icon size={19} />
+                  {isNotif && unreadCount > 0 && (
+                    <span style={{
+                      position: 'absolute', top: -4, right: -4,
+                      width: 14, height: 14, borderRadius: '50%',
+                      background: 'var(--brand-teal-vivid)', color: 'var(--brand-cream-base)',
+                      fontSize: '0.55rem', fontWeight: 800,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      border: '1.5px solid var(--canvas-bg)',
+                    }}>
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
                 </div>
-                {!isCollapsed && <span>{item.label}</span>}
+                {!isCollapsed && (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
+                    {item.label}
+                    {isNotif && unreadCount > 0 && (
+                      <span style={{
+                        background: 'var(--brand-teal-dim)',
+                        color: 'var(--brand-teal-vivid)',
+                        border: '1px solid var(--glass-border-medium)',
+                        fontSize: '0.62rem', fontWeight: 800,
+                        padding: '1px 6px', borderRadius: 999,
+                      }}>
+                        {unreadCount}
+                      </span>
+                    )}
+                  </span>
+                )}
               </Link>
             );
           })}
+
 
           {!isCollapsed && (
             <div style={{ marginTop: 'auto', padding: '0.75rem 0.5rem' }}>
@@ -155,7 +189,7 @@ export default function AppShell({ children }) {
                   gap: '0.4rem',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--brand-forest-vivid)', fontWeight: 700 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--brand-teal-vivid)', fontWeight: 700 }}>
                   <Sparkles size={14} />
                   <span>Institutional Cloud</span>
                 </div>
@@ -177,9 +211,9 @@ export default function AppShell({ children }) {
                   height: 34,
                   minWidth: 34,
                   borderRadius: 'var(--radius-pill)',
-                  background: 'var(--brand-forest-dark)',
-                  border: '1px solid rgba(230, 212, 230, 0.28)',
-                  color: '#FAF8FB',
+                  background: 'var(--brand-teal-mid)',
+                  border: '1px solid rgba(240, 237, 229, 0.22)',
+                  color: 'var(--brand-cream-base)',
                   fontWeight: 700,
                   fontSize: '0.85rem',
                   display: 'flex',
@@ -244,13 +278,63 @@ export default function AppShell({ children }) {
             </button>
 
             <div>
-              <h2 style={{ fontSize: '1.15rem', fontWeight: 700, letterSpacing: '-0.02em' }}>
+              <h2 style={{ fontSize: '1.15rem', fontWeight: 700, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 RESERViT <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>• Institutional Portal</span>
+                <span className="live-indicator" title="System online" />
               </h2>
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {/* Notification Bell */}
+            <button
+              id="topbar-notifications-btn"
+              onClick={() => navigate('/notifications')}
+              title="Notifications"
+              aria-label="View notifications"
+              style={{
+                position: 'relative',
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                padding: '0.4rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 'var(--radius-sm)',
+                transition: 'color var(--transition-fast)',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-primary)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+            >
+              <Bell size={19} />
+              {unreadCount > 0 && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    minWidth: 16,
+                    height: 16,
+                    borderRadius: 999,
+                    background: 'var(--brand-teal-vivid)',
+                    color: 'var(--brand-cream-base)',
+                    fontSize: '0.6rem',
+                    fontWeight: 800,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0 3px',
+                    lineHeight: 1,
+                    border: '1.5px solid var(--canvas-bg)',
+                  }}
+                >
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+
             {/* Light / Dark Mode Toggle */}
             <button
               onClick={toggleTheme}
@@ -269,8 +353,8 @@ export default function AppShell({ children }) {
                 fontSize: '0.75rem',
                 padding: '0.35rem 0.75rem',
                 borderRadius: 'var(--radius-pill)',
-                background: 'var(--brand-forest-dim)',
-                color: 'var(--brand-forest-vivid)',
+                background: 'var(--brand-teal-dim)',
+                color: 'var(--brand-teal-vivid)',
                 border: '1px solid var(--glass-border-medium)',
                 fontWeight: 600,
               }}

@@ -29,6 +29,7 @@ web/dist-ssr/
 
 # Agents
 .agents/
+.agent/
 
 # React Native / Mobile
 mobile/.expo/

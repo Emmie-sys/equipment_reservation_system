@@ -30,7 +30,7 @@ export default function StatusBadge({ status, size = 'md', className = '' }) {
   const current = configMap[rawStatus] || {
     label: status,
     class: 'badge-brand',
-    dot: '#1B6A41',
+    dot: '#006B65',
   };
 
   const sizeStyles = {

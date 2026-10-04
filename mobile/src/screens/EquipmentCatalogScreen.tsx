@@ -16,6 +16,7 @@ import { GlassCard } from '../components/GlassCard';
 import { Badge } from '../components/Badge';
 import { Button } from '../components/Button';
 import { AppHeader } from '../components/AppHeader';
+import { SmoothReveal } from '../components/SmoothReveal';
 
 const CATEGORIES = ['All', 'Computing', 'Audiovisual', 'Photography', 'Laboratory'];
 
@@ -56,79 +57,81 @@ export const EquipmentCatalogScreen = ({ navigation }: any) => {
     return catName.toLowerCase().includes(selectedCategory.toLowerCase());
   });
 
-  const renderItem = ({ item }: { item: Equipment }) => {
+  const renderItem = ({ item, index }: { item: Equipment; index: number }) => {
     const isAvailable = item.status?.status_name === 'available';
     const location = item.room
       ? `${item.room.building?.building_name || 'Complex'} • ${item.room.room_code}`
       : 'STC-101 Central Depot';
 
     return (
-      <GlassCard style={styles.card} padding={16}>
-        <View style={styles.cardTop}>
-          <View
-            style={[
-              styles.tagWrapper,
-              {
-                backgroundColor: isDark ? 'rgba(230, 212, 230, 0.08)' : 'rgba(9, 56, 31, 0.06)',
-                borderColor: theme.colors.borderSubtle,
-              },
-            ]}
-          >
-            <Text
+      <SmoothReveal delay={Math.min(index, 7) * 45} distance={10}>
+        <GlassCard style={styles.card} padding={16}>
+          <View style={styles.cardTop}>
+            <View
               style={[
-                styles.assetTag,
-                { color: isDark ? theme.colors.brandLilacBase : theme.colors.brandForestMid },
+                styles.tagWrapper,
+                {
+                  backgroundColor: isDark ? 'rgba(230, 212, 230, 0.08)' : 'rgba(9, 56, 31, 0.06)',
+                  borderColor: theme.colors.borderSubtle,
+                },
               ]}
             >
-              {item.asset_tag}
-            </Text>
+              <Text
+                style={[
+                  styles.assetTag,
+                  { color: isDark ? theme.colors.brandLilacBase : theme.colors.brandForestMid },
+                ]}
+              >
+                {item.asset_tag}
+              </Text>
+            </View>
+            <Badge
+              label={item.status?.status_name || (isAvailable ? 'Available' : 'In Use')}
+              variant={isAvailable ? 'available' : 'active'}
+              size="sm"
+            />
           </View>
-          <Badge
-            label={item.status?.status_name || (isAvailable ? 'Available' : 'In Use')}
-            variant={isAvailable ? 'available' : 'active'}
-            size="sm"
-          />
-        </View>
 
-        <Text style={[styles.modelName, { color: theme.colors.textPrimary }]}>
-          {item.model?.model_name || 'Equipment Instrument'}
-        </Text>
-        <Text style={[styles.manufacturer, { color: theme.colors.textMuted }]}>
-          {item.model?.manufacturer || 'Institutional Asset'}
-        </Text>
+          <Text style={[styles.modelName, { color: theme.colors.textPrimary }]}>
+            {item.model?.model_name || 'Equipment Instrument'}
+          </Text>
+          <Text style={[styles.manufacturer, { color: theme.colors.textMuted }]}>
+            {item.model?.manufacturer || 'Institutional Asset'}
+          </Text>
 
-        <View style={styles.locationRow}>
-          <Ionicons name="location-outline" size={14} color={theme.colors.textMuted} />
-          <Text style={[styles.locationText, { color: theme.colors.textSecondary }]}>{location}</Text>
-        </View>
-
-        {item.condition_notes ? (
-          <View
-            style={[
-              styles.conditionBox,
-              {
-                backgroundColor: isDark ? 'rgba(9, 56, 31, 0.4)' : 'rgba(9, 56, 31, 0.06)',
-                borderColor: theme.colors.borderSubtle,
-              },
-            ]}
-          >
-            <Text style={[styles.conditionText, { color: theme.colors.textMuted }]}>
-              Note: {item.condition_notes}
-            </Text>
+          <View style={styles.locationRow}>
+            <Ionicons name="location-outline" size={14} color={theme.colors.textMuted} />
+            <Text style={[styles.locationText, { color: theme.colors.textSecondary }]}>{location}</Text>
           </View>
-        ) : null}
 
-        <View style={styles.cardActions}>
-          <Button
-            title={item.is_bookable ? 'Reserve Equipment' : 'Non-Circulating'}
-            variant={item.is_bookable ? 'primary' : 'secondary'}
-            size="sm"
-            disabled={!item.is_bookable}
-            icon={item.is_bookable ? <Ionicons name="calendar" size={14} color={isDark ? theme.colors.brandForestDark : '#FAF8FB'} /> : undefined}
-            onPress={() => navigation.navigate('NewReservation', { equipment: item })}
-          />
-        </View>
-      </GlassCard>
+          {item.condition_notes ? (
+            <View
+              style={[
+                styles.conditionBox,
+                {
+                  backgroundColor: isDark ? 'rgba(9, 56, 31, 0.4)' : 'rgba(9, 56, 31, 0.06)',
+                  borderColor: theme.colors.borderSubtle,
+                },
+              ]}
+            >
+              <Text style={[styles.conditionText, { color: theme.colors.textMuted }]}>
+                Note: {item.condition_notes}
+              </Text>
+            </View>
+          ) : null}
+
+          <View style={styles.cardActions}>
+            <Button
+              title={item.is_bookable ? 'Reserve Equipment' : 'Non-Circulating'}
+              variant={item.is_bookable ? 'primary' : 'secondary'}
+              size="sm"
+              disabled={!item.is_bookable}
+              icon={item.is_bookable ? <Ionicons name="calendar" size={14} color={isDark ? theme.colors.brandForestDark : '#FAF8FB'} /> : undefined}
+              onPress={() => navigation.navigate('NewReservation', { equipment: item })}
+            />
+          </View>
+        </GlassCard>
+      </SmoothReveal>
     );
   };
 
