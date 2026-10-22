@@ -6,11 +6,18 @@ import {
   MapPin,
   CheckCircle,
   AlertCircle,
-  Info,
   Clock,
   Sparkles,
   LayoutGrid,
   List,
+  PlusCircle,
+  Edit2,
+  Trash2,
+  Check,
+  X,
+  Boxes,
+  Shield,
+  Layers,
 } from 'lucide-react';
 import { equipmentApi } from '../../api/equipment';
 import { reservationApi } from '../../api/reservations';
@@ -29,7 +36,16 @@ export default function EquipmentCatalogPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
 
-  // Reservation form modal
+  const isStaffOrAdmin = user?.roles?.some((r) =>
+    ['ADMIN', 'ATTENDANT', 'TECHNICIAN'].includes(r?.toUpperCase())
+  );
+
+  // Metadata for Admin / Attendant forms
+  const [models, setModels] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [statuses, setStatuses] = useState([]);
+
+  // Reservation form modal (for students/lecturers/staff booking)
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -44,9 +60,65 @@ export default function EquipmentCatalogPage() {
   const [submitSuccess, setSubmitSuccess] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Add Equipment Modal (Staff/Admin CRUD)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addForm, setAddForm] = useState({
+    model_id: '',
+    asset_tag: '',
+    serial_number: '',
+    current_room_id: '',
+    status_id: 1,
+    condition_notes: 'Brand new / operational hardware unit.',
+    is_bookable: true,
+  });
+  const [addError, setAddError] = useState(null);
+  const [isAdding, setIsAdding] = useState(false);
+
+  // Edit Equipment Modal (Staff/Admin CRUD)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingUnit, setEditingUnit] = useState(null);
+  const [editForm, setEditForm] = useState({
+    model_id: '',
+    asset_tag: '',
+    serial_number: '',
+    current_room_id: '',
+    status_id: 1,
+    condition_notes: '',
+    is_bookable: true,
+  });
+  const [editError, setEditError] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // General Notification / Feedback banner
+  const [notification, setNotification] = useState(null);
+
   useEffect(() => {
     fetchEquipment();
   }, [search, statusFilter]);
+
+  useEffect(() => {
+    if (isStaffOrAdmin) {
+      loadMetadata();
+    }
+  }, [isStaffOrAdmin]);
+
+  async function loadMetadata() {
+    try {
+      const [mRes, rRes, sRes] = await Promise.all([
+        equipmentApi.getModels().catch(() => ({ data: [] })),
+        equipmentApi.getRooms().catch(() => ({ data: [] })),
+        equipmentApi.getStatuses().catch(() => ({ data: [] })),
+      ]);
+      setModels(mRes.data || []);
+      setRooms(rRes.data || []);
+      setStatuses(sRes.data || []);
+      if (mRes.data?.length > 0 && !addForm.model_id) {
+        setAddForm((prev) => ({ ...prev, model_id: mRes.data[0].model_id }));
+      }
+    } catch (err) {
+      console.error('Failed to load equipment metadata:', err);
+    }
+  }
 
   async function fetchEquipment() {
     try {
@@ -54,6 +126,10 @@ export default function EquipmentCatalogPage() {
       const params = {};
       if (search) params.search = search;
       if (statusFilter) params.status = statusFilter;
+      if (!isStaffOrAdmin) {
+        // Students and Lecturers strictly view available equipment excluding booked units
+        params.exclude_booked = 'true';
+      }
 
       const res = await equipmentApi.getAll(params);
       setEquipmentList(res.data || []);
@@ -64,6 +140,7 @@ export default function EquipmentCatalogPage() {
     }
   }
 
+  // ── Booking Flow ──────────────────────────────────────────────────────────
   const handleOpenReserveModal = (unit) => {
     setSelectedUnit(unit);
     setSubmitError(null);
@@ -127,7 +204,7 @@ export default function EquipmentCatalogPage() {
       setTimeout(() => {
         setIsModalOpen(false);
         fetchEquipment();
-      }, 1800);
+      }, 1600);
     } catch (err) {
       if (err.status === 409) {
         setSubmitError('Schedule conflict! This unit is already booked during these requested hours.');
@@ -136,6 +213,104 @@ export default function EquipmentCatalogPage() {
       }
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // ── Staff & Admin Equipment CRUD ──────────────────────────────────────────
+  const handleOpenAddModal = () => {
+    setAddError(null);
+    setAddForm({
+      model_id: models[0]?.model_id || '',
+      asset_tag: '',
+      serial_number: '',
+      current_room_id: rooms[0]?.room_id || '',
+      status_id: statuses[0]?.status_id || 1,
+      condition_notes: 'Operational and intact.',
+      is_bookable: true,
+    });
+    setIsAddModalOpen(true);
+  };
+
+  const handleCreateEquipment = async (e) => {
+    e.preventDefault();
+    setAddError(null);
+    setIsAdding(true);
+
+    try {
+      await equipmentApi.create({
+        model_id: parseInt(addForm.model_id, 10),
+        asset_tag: addForm.asset_tag,
+        serial_number: addForm.serial_number,
+        current_room_id: addForm.current_room_id ? parseInt(addForm.current_room_id, 10) : null,
+        status_id: parseInt(addForm.status_id, 10),
+        condition_notes: addForm.condition_notes,
+        is_bookable: addForm.is_bookable,
+      });
+
+      setIsAddModalOpen(false);
+      setNotification({ type: 'success', message: `Unit '${addForm.asset_tag}' registered successfully.` });
+      fetchEquipment();
+    } catch (err) {
+      setAddError(err.message || 'Failed to register equipment.');
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const handleOpenEditModal = (unit) => {
+    setEditingUnit(unit);
+    setEditError(null);
+    setEditForm({
+      model_id: unit.model_id,
+      asset_tag: unit.asset_tag,
+      serial_number: unit.serial_number || '',
+      current_room_id: unit.room?.room_id || unit.current_room_id || '',
+      status_id: unit.status?.status_id || 1,
+      condition_notes: unit.condition_notes || '',
+      is_bookable: unit.is_bookable !== false,
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateEquipment = async (e) => {
+    e.preventDefault();
+    if (!editingUnit) return;
+    setEditError(null);
+    setIsEditing(true);
+
+    try {
+      await equipmentApi.update(editingUnit.equipment_id, {
+        model_id: parseInt(editForm.model_id, 10),
+        asset_tag: editForm.asset_tag,
+        serial_number: editForm.serial_number,
+        current_room_id: editForm.current_room_id ? parseInt(editForm.current_room_id, 10) : null,
+        status_id: parseInt(editForm.status_id, 10),
+        condition_notes: editForm.condition_notes,
+        is_bookable: editForm.is_bookable,
+      });
+
+      setIsEditModalOpen(false);
+      setEditingUnit(null);
+      setNotification({ type: 'success', message: `Unit #${editingUnit.equipment_id} updated successfully.` });
+      fetchEquipment();
+    } catch (err) {
+      setEditError(err.message || 'Failed to update equipment unit.');
+    } finally {
+      setIsEditing(false);
+    }
+  };
+
+  const handleDeleteEquipment = async (unit) => {
+    if (!window.confirm(`Are you sure you want to remove or decommission equipment unit '${unit.asset_tag}'?`)) {
+      return;
+    }
+
+    try {
+      const res = await equipmentApi.delete(unit.equipment_id);
+      setNotification({ type: 'success', message: res.message || `Equipment '${unit.asset_tag}' processed.` });
+      fetchEquipment();
+    } catch (err) {
+      setNotification({ type: 'error', message: err.message || 'Failed to delete equipment unit.' });
     }
   };
 
@@ -152,33 +327,76 @@ export default function EquipmentCatalogPage() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-              <span className="badge badge-brand">Catalog & Hardware Inventory</span>
-              <span className="badge badge-available">Real-Time Availability</span>
+              <span className="badge badge-brand">
+                {isStaffOrAdmin ? 'Depot Inventory Management' : 'Equipment Catalog'}
+              </span>
+              <span className={`badge ${isStaffOrAdmin ? 'badge-teal' : 'badge-available'}`}>
+                {isStaffOrAdmin ? 'All Units (Including Booked)' : 'Ready for Booking'}
+              </span>
             </div>
-            <h1 style={{ fontSize: '1.85rem', fontWeight: 800 }}>Equipment Catalog</h1>
+            <h1 style={{ fontSize: '1.85rem', fontWeight: 800 }}>
+              {isStaffOrAdmin ? 'Depot Hardware Fleet' : 'Equipment Catalog'}
+            </h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-              Audiovisual, computing workstations, photography cameras, and laboratory instrumentation.
+              {isStaffOrAdmin
+                ? 'Full inventory governance: manage hardware units, check-in availability, status updates, and equipment CRUD.'
+                : 'Browse available audiovisual equipment, computing laptops, and laboratory kits ready for reservation.'}
             </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`btn ${viewMode === 'grid' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
-              title="Grid View"
-            >
-              <LayoutGrid size={15} /> Grid
-            </button>
-            <button
-              onClick={() => setViewMode('table')}
-              className={`btn ${viewMode === 'table' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
-              title="Table View"
-            >
-              <List size={15} /> Table
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {isStaffOrAdmin && (
+              <button
+                onClick={handleOpenAddModal}
+                className="btn btn-primary btn-sm"
+                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+              >
+                <PlusCircle size={15} />
+                <span>Add Equipment</span>
+              </button>
+            )}
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'var(--glass-surface-secondary)', padding: '2px', borderRadius: 'var(--radius-sm)' }}>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`btn ${viewMode === 'grid' ? 'btn-primary' : 'btn-ghost'} btn-sm`}
+                title="Grid View"
+              >
+                <LayoutGrid size={15} />
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`btn ${viewMode === 'table' ? 'btn-primary' : 'btn-ghost'} btn-sm`}
+                title="Table View"
+              >
+                <List size={15} />
+              </button>
+            </div>
           </div>
         </div>
       </GlassCard>
+
+      {/* Notification banner */}
+      {notification && (
+        <div
+          style={{
+            padding: '0.85rem 1.25rem',
+            borderRadius: 'var(--radius-md)',
+            background: notification.type === 'success' ? 'rgba(0, 128, 128, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+            border: `1px solid ${notification.type === 'success' ? 'var(--brand-teal-vivid)' : 'rgba(239, 68, 68, 0.3)'}`,
+            color: notification.type === 'success' ? 'var(--brand-teal-vivid)' : '#ef4444',
+            fontSize: '0.875rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <span>{notification.message}</span>
+          <button onClick={() => setNotification(null)} className="btn btn-ghost btn-sm" style={{ padding: '0 0.3rem' }}>
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
       {/* Filter & Search Bar */}
       <GlassCard padding="1rem 1.25rem">
@@ -204,20 +422,30 @@ export default function EquipmentCatalogPage() {
             />
           </div>
 
-          <div style={{ minWidth: '180px' }}>
-            <select
-              className="form-select"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              style={{ height: '38px', fontSize: '0.85rem' }}
-            >
-              <option value="">All Statuses</option>
-              <option value="available">Available Now</option>
-              <option value="reserved">Reserved</option>
-              <option value="checked_out">Checked Out</option>
-              <option value="maintenance">Under Maintenance</option>
-            </select>
-          </div>
+          {/* Status filter: Staff see all options; Students see available indicator */}
+          {isStaffOrAdmin ? (
+            <div style={{ minWidth: '180px' }}>
+              <select
+                className="form-select"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                style={{ height: '38px', fontSize: '0.85rem' }}
+              >
+                <option value="">All Fleet Statuses</option>
+                <option value="available">Available</option>
+                <option value="reserved">Reserved / Allocated</option>
+                <option value="checked_out">Checked Out / In Use</option>
+                <option value="maintenance">Under Maintenance</option>
+                <option value="faulty">Faulty / Needs Repair</option>
+                <option value="decommissioned">Decommissioned</option>
+              </select>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.825rem', color: 'var(--text-muted)' }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e' }}></span>
+              <span>Showing unbooked, available equipment ready for checkout</span>
+            </div>
+          )}
         </div>
       </GlassCard>
 
@@ -227,16 +455,20 @@ export default function EquipmentCatalogPage() {
       ) : equipmentList.length === 0 ? (
         <EmptyState
           title="No equipment found"
-          description="Try adjusting your search criteria or status filter to find available hardware."
+          description={
+            isStaffOrAdmin
+              ? 'No equipment units match your current filter.'
+              : 'There are currently no available, unbooked equipment units in this category.'
+          }
           icon={Laptop}
         />
       ) : viewMode === 'grid' ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: '1.25rem' }}>
           {equipmentList.map((unit) => {
             const isAvailable = unit.status?.status_name === 'available';
             const location = unit.room
-              ? `${unit.room.building?.building_name || 'Complex'} • ${unit.room.room_code}`
-              : 'Central Storage';
+              ? `${unit.room.building?.building_name || 'Campus Depot'} • ${unit.room.room_code}`
+              : 'Central Lab Storage';
 
             return (
               <GlassCard
@@ -252,12 +484,12 @@ export default function EquipmentCatalogPage() {
                         width: 42,
                         height: 42,
                         borderRadius: 'var(--radius-md)',
-                        background: 'var(--brand-forest-dim)',
+                        background: 'var(--brand-teal-dim)',
                         border: '1px solid var(--glass-border-medium)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: 'var(--brand-forest-vivid)',
+                        color: 'var(--brand-teal-vivid)',
                       }}
                     >
                       <Laptop size={20} />
@@ -269,7 +501,7 @@ export default function EquipmentCatalogPage() {
                     {unit.model?.model_name || 'Standard Equipment Unit'}
                   </h4>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.65rem' }}>
-                    {unit.model?.manufacturer || 'Department Asset'} • {unit.model?.category?.category_name || 'General'}
+                    {unit.model?.manufacturer || 'University Depot'} • {unit.model?.category?.category_name || 'Hardware'}
                   </div>
 
                   <div
@@ -291,18 +523,46 @@ export default function EquipmentCatalogPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)' }}>
                       <MapPin size={12} /> {location}
                     </div>
+                    {unit.condition_notes && (
+                      <div style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.7rem' }}>
+                        "{unit.condition_notes}"
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <button
-                  onClick={() => handleOpenReserveModal(unit)}
-                  disabled={!isAvailable}
-                  className={`btn ${isAvailable ? 'btn-primary' : 'btn-secondary'} btn-sm`}
-                  style={{ width: '100%', opacity: isAvailable ? 1 : 0.6 }}
-                >
-                  <Calendar size={14} />
-                  {isAvailable ? 'Book This Equipment' : 'Check Schedule'}
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <button
+                    onClick={() => handleOpenReserveModal(unit)}
+                    disabled={!isAvailable}
+                    className={`btn ${isAvailable ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+                    style={{ flex: 1, opacity: isAvailable ? 1 : 0.6 }}
+                  >
+                    <Calendar size={14} />
+                    {isAvailable ? 'Book This Gear' : 'Booked / Unavailable'}
+                  </button>
+
+                  {isStaffOrAdmin && (
+                    <>
+                      <button
+                        onClick={() => handleOpenEditModal(unit)}
+                        className="btn btn-secondary btn-sm"
+                        title="Edit Equipment Details"
+                        style={{ padding: '0.4rem 0.6rem' }}
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteEquipment(unit)}
+                        className="btn btn-ghost btn-sm"
+                        title="Delete or Decommission Unit"
+                        style={{ padding: '0.4rem 0.6rem', color: '#ef4444' }}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </>
+                  )}
+                </div>
               </GlassCard>
             );
           })}
@@ -318,7 +578,7 @@ export default function EquipmentCatalogPage() {
                 <th>Manufacturer</th>
                 <th>Depot Location</th>
                 <th>Status</th>
-                <th>Action</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -333,14 +593,36 @@ export default function EquipmentCatalogPage() {
                   <td>{unit.room?.room_code || 'Central'}</td>
                   <td><StatusBadge status={unit.status?.status_name} /></td>
                   <td>
-                    <button
-                      onClick={() => handleOpenReserveModal(unit)}
-                      disabled={unit.status?.status_name !== 'available'}
-                      className="btn btn-primary btn-sm"
-                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
-                    >
-                      Book
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <button
+                        onClick={() => handleOpenReserveModal(unit)}
+                        disabled={unit.status?.status_name !== 'available'}
+                        className="btn btn-primary btn-sm"
+                        style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
+                      >
+                        Book
+                      </button>
+                      {isStaffOrAdmin && (
+                        <>
+                          <button
+                            onClick={() => handleOpenEditModal(unit)}
+                            className="btn btn-secondary btn-sm"
+                            style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                            title="Edit"
+                          >
+                            <Edit2 size={13} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteEquipment(unit)}
+                            className="btn btn-ghost btn-sm"
+                            style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', color: '#ef4444' }}
+                            title="Delete"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -485,6 +767,245 @@ export default function EquipmentCatalogPage() {
               onChange={(e) => setFormData({ ...formData, purpose_details: e.target.value })}
             />
           </div>
+        </form>
+      </GlassModal>
+
+      {/* Add Equipment Modal (Staff/Admin CRUD) */}
+      <GlassModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        title="Add Equipment Unit to Fleet"
+        subtitle="Register new hardware asset into depot inventory"
+        footer={
+          <>
+            <button onClick={() => setIsAddModalOpen(false)} className="btn btn-secondary">
+              Cancel
+            </button>
+            <button
+              onClick={handleCreateEquipment}
+              disabled={isAdding}
+              className="btn btn-primary"
+            >
+              {isAdding ? 'Registering...' : 'Register Equipment'}
+            </button>
+          </>
+        }
+      >
+        <form onSubmit={handleCreateEquipment} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {addError && (
+            <div style={{ padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', fontSize: '0.825rem' }}>
+              {addError}
+            </div>
+          )}
+
+          <div className="form-group">
+            <label className="form-label">Hardware Model *</label>
+            <select
+              required
+              className="form-select"
+              value={addForm.model_id}
+              onChange={(e) => setAddForm({ ...addForm, model_id: e.target.value })}
+            >
+              {models.map((m) => (
+                <option key={m.model_id} value={m.model_id}>
+                  {m.model_name} ({m.manufacturer}) — {m.category_name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+            <div className="form-group">
+              <label className="form-label">Asset Tag *</label>
+              <input
+                type="text"
+                required
+                className="form-input"
+                placeholder="e.g. GU-LAP-099"
+                value={addForm.asset_tag}
+                onChange={(e) => setAddForm({ ...addForm, asset_tag: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Serial Number</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="e.g. SN-8839201"
+                value={addForm.serial_number}
+                onChange={(e) => setAddForm({ ...addForm, serial_number: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+            <div className="form-group">
+              <label className="form-label">Storage Room / Depot</label>
+              <select
+                className="form-select"
+                value={addForm.current_room_id}
+                onChange={(e) => setAddForm({ ...addForm, current_room_id: e.target.value })}
+              >
+                <option value="">No Room Assigned</option>
+                {rooms.map((r) => (
+                  <option key={r.room_id} value={r.room_id}>
+                    {r.room_code} — {r.building_name || 'Complex'}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Initial Status</label>
+              <select
+                className="form-select"
+                value={addForm.status_id}
+                onChange={(e) => setAddForm({ ...addForm, status_id: e.target.value })}
+              >
+                {statuses.map((s) => (
+                  <option key={s.status_id} value={s.status_id}>
+                    {s.status_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Condition Notes</label>
+            <input
+              type="text"
+              className="form-input"
+              value={addForm.condition_notes}
+              onChange={(e) => setAddForm({ ...addForm, condition_notes: e.target.value })}
+            />
+          </div>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+            <input
+              type="checkbox"
+              checked={addForm.is_bookable}
+              onChange={(e) => setAddForm({ ...addForm, is_bookable: e.target.checked })}
+            />
+            <span>Allow general booking by students and lecturers</span>
+          </label>
+        </form>
+      </GlassModal>
+
+      {/* Edit Equipment Modal (Staff/Admin CRUD) */}
+      <GlassModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="Edit Equipment Details"
+        subtitle={`Editing Unit #${editingUnit?.equipment_id} (${editingUnit?.asset_tag})`}
+        footer={
+          <>
+            <button onClick={() => setIsEditModalOpen(false)} className="btn btn-secondary">
+              Cancel
+            </button>
+            <button
+              onClick={handleUpdateEquipment}
+              disabled={isEditing}
+              className="btn btn-primary"
+            >
+              {isEditing ? 'Saving...' : 'Save Changes'}
+            </button>
+          </>
+        }
+      >
+        <form onSubmit={handleUpdateEquipment} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {editError && (
+            <div style={{ padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', fontSize: '0.825rem' }}>
+              {editError}
+            </div>
+          )}
+
+          <div className="form-group">
+            <label className="form-label">Hardware Model</label>
+            <select
+              className="form-select"
+              value={editForm.model_id}
+              onChange={(e) => setEditForm({ ...editForm, model_id: e.target.value })}
+            >
+              {models.map((m) => (
+                <option key={m.model_id} value={m.model_id}>
+                  {m.model_name} ({m.manufacturer})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+            <div className="form-group">
+              <label className="form-label">Asset Tag *</label>
+              <input
+                type="text"
+                required
+                className="form-input"
+                value={editForm.asset_tag}
+                onChange={(e) => setEditForm({ ...editForm, asset_tag: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Serial Number</label>
+              <input
+                type="text"
+                className="form-input"
+                value={editForm.serial_number}
+                onChange={(e) => setEditForm({ ...editForm, serial_number: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+            <div className="form-group">
+              <label className="form-label">Storage Room / Depot</label>
+              <select
+                className="form-select"
+                value={editForm.current_room_id}
+                onChange={(e) => setEditForm({ ...editForm, current_room_id: e.target.value })}
+              >
+                <option value="">No Room Assigned</option>
+                {rooms.map((r) => (
+                  <option key={r.room_id} value={r.room_id}>
+                    {r.room_code} — {r.building_name || 'Complex'}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Status</label>
+              <select
+                className="form-select"
+                value={editForm.status_id}
+                onChange={(e) => setEditForm({ ...editForm, status_id: e.target.value })}
+              >
+                {statuses.map((s) => (
+                  <option key={s.status_id} value={s.status_id}>
+                    {s.status_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Condition Notes</label>
+            <input
+              type="text"
+              className="form-input"
+              value={editForm.condition_notes}
+              onChange={(e) => setEditForm({ ...editForm, condition_notes: e.target.value })}
+            />
+          </div>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+            <input
+              type="checkbox"
+              checked={editForm.is_bookable}
+              onChange={(e) => setEditForm({ ...editForm, is_bookable: e.target.checked })}
+            />
+            <span>Allow general booking by students and lecturers</span>
+          </label>
         </form>
       </GlassModal>
     </div>

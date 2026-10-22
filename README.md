@@ -137,13 +137,44 @@ npx expo start
 
 ---
 
-## Default Institutional Demo Credentials
+## Institutional Testing Credentials
 
-| Role | Email | Password | Permissions |
+> **Note:** These credentials are for development and testing only. In production the system integrates with the university's SSO provider (SAML 2.0 / LDAP). Credentials must **not** be displayed or hardcoded on any authentication page.
+
+| Role | Email | Password | Dashboard & Permissions |
 | :--- | :--- | :--- | :--- |
-| **Admin / Technician** | `admin@institution.edu` | `emmie` | Approve/Reject bookings, inventory management, audit trail |
-| **Faculty / Staff** | `staff@institution.edu` | `emmie` | Request equipment, review department bookings |
-| **Student** | `student@institution.edu` | `emmie` | Browse equipment catalog, submit bookings, cancel own bookings |
+| **Admin** | `admin@gu.ac.ug` | `emmie` | Full system governance, depot fleet management with CRUD, student & staff SSO provisioning, user role management (full CRUD), system configuration settings, broadcast messaging, approve/reject all reservations, audit logs |
+| **Attendant** | `attendant@gu.ac.ug` | `emmie` | Dispatch operations desk, depot fleet management with CRUD, physical handover (check-in loan) & return inspection (check-out), faulty fleet resolution board, provision students for SSO, custom messaging & reminders |
+| **Lecturer** | `lecturer@gu.ac.ug` | `emmie` | Academic course practicals desk, personal bookings overview only, unbooked equipment catalog reservation, delegation to class reps, messaging inbox |
+| **Student (Class Rep)** | `student@gmail.com` | `emmie` | Class representative portal, personal loan countdown and overview only, unbooked equipment catalog reservation, view active loans, cancel pending bookings, messaging inbox |
+
+### Role-Based Access Control (RBAC) Architecture
+
+#### 1. Web Portal (`web/`)
+- **[AppShell.jsx](file:///h:/equipment_reservation_system/web/src/components/layout/AppShell.jsx)**: 4 independent navigation schemes tailored specifically for `STUDENT`, `LECTURER`, `ATTENDANT`, and `ADMIN`.
+- **[AppRoutes.jsx](file:///h:/equipment_reservation_system/web/src/routes/AppRoutes.jsx)**: Route guards (`RoleRoute`) protecting privileged paths:
+  - `/equipment/faulty` — Admin & Attendant only
+  - `/users` — Admin & Attendant only
+  - `/roles` — Admin only
+  - `/settings` — Admin only
+- **[EquipmentCatalogPage.jsx](file:///h:/equipment_reservation_system/web/src/features/equipment/EquipmentCatalogPage.jsx)**: Automatically filters out booked units for Students & Lecturers; reveals full fleet and Add/Edit/Delete actions for Attendants & Admins.
+- **[ReservationsPage.jsx](file:///h:/equipment_reservation_system/web/src/features/reservations/ReservationsPage.jsx)**: Displays "My Reservations" for non-staff (strictly personal), and "Depot Reservations Management" for staff with approval/handover/checkin actions.
+- **[FaultyEquipmentPage.jsx](file:///h:/equipment_reservation_system/web/src/features/equipment/FaultyEquipmentPage.jsx)**: Dedicated resolution board for equipment in maintenance, faulty, or decommissioned states.
+- **[UserManagementPage.jsx](file:///h:/equipment_reservation_system/web/src/features/users/UserManagementPage.jsx)**: University user directory with SSO student provisioning and admin status governance.
+- **[MessagesPage.jsx](file:///h:/equipment_reservation_system/web/src/features/messages/MessagesPage.jsx)**: Tabbed inbox, sent items, and compose modal with broadcast options.
+- **[RolesManagementPage.jsx](file:///h:/equipment_reservation_system/web/src/features/admin/RolesManagementPage.jsx)**: Role permissions and descriptions CRUD.
+- **[SystemSettingsPage.jsx](file:///h:/equipment_reservation_system/web/src/features/admin/SystemSettingsPage.jsx)**: Operational parameters (max loan duration, academic year, auto-approvals, maintenance mode).
+
+#### 2. Mobile App (`mobile/`)
+- **[AppNavigator.tsx](file:///h:/equipment_reservation_system/mobile/src/navigation/AppNavigator.tsx)**: Dynamically renders bottom tabs based on the authenticated user's role:
+  - **Student / Lecturer**: Overview, Catalog (unbooked only), My Loans, Messages, Account
+  - **Attendant**: Dispatch Desk, Fleet (all units), Bookings Queue, Faulty Gear, Add User (SSO), Account
+  - **Admin**: Governance, Fleet, Bookings Queue, Faulty Fleet, User Governance, Account
+- **[HomeScreen.tsx](file:///h:/equipment_reservation_system/mobile/src/screens/HomeScreen.tsx)**: Role-specialized dashboard view with Apple HIG spring animations and metrics.
+- **[EquipmentCatalogScreen.tsx](file:///h:/equipment_reservation_system/mobile/src/screens/EquipmentCatalogScreen.tsx)**: Automatic unbooked filtering for student accounts.
+- **[FaultyEquipmentScreen.tsx](file:///h:/equipment_reservation_system/mobile/src/screens/FaultyEquipmentScreen.tsx)**: Mobile repair and servicing resolution board.
+- **[UserManagementScreen.tsx](file:///h:/equipment_reservation_system/mobile/src/screens/UserManagementScreen.tsx)**: Mobile SSO user and student provisioning.
+- **[MyReservationsScreen.tsx](file:///h:/equipment_reservation_system/mobile/src/screens/MyReservationsScreen.tsx)**: Interactive mobile dispatch queue with 1-tap Approve, Reject, Handover, and Return actions.
 
 ---
 
@@ -153,4 +184,5 @@ npx expo start
   $$\text{Overlap} \iff (\text{Reservation.Start} < \text{Requested.End}) \land (\text{Reservation.End} > \text{Requested.Start})$$
   Double-bookings return HTTP 409 Conflict with the exact conflicting slot.
 - **Audit Trails**: All status updates (pending -> approved -> active -> completed/cancelled) are recorded in both `reservation_status_history` and `audit_logs`.
-- **Role Isolation**: Non-administrators can only query and manage their own reservations.
+- **Role Isolation**: Non-administrators (Students, Lecturers) are strictly restricted at both backend REST API and frontend levels to their own personal reservations.
+

@@ -9,8 +9,6 @@ import {
   AlertCircle,
   TrendingUp,
   Sparkles,
-  Sun,
-  Moon
 } from 'lucide-react';
 import GlassCard from '../../components/glass/GlassCard';
 import GlassModal from '../../components/glass/GlassModal';
@@ -26,7 +24,7 @@ import Select from '../../components/forms/Select';
 import { useTheme } from '../../context/ThemeContext';
 
 export default function StyleGuidePage() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const [modalOpen, setModalOpen] = useState(false);
 
   const sampleTableData = [
@@ -68,15 +66,15 @@ export default function StyleGuidePage() {
   ];
 
   const sampleBarData = [
-    { label: 'AV / Projectors', value: 45, color: '#006B65' },
-    { label: 'Cameras & Media', value: 38, color: '#008C84' },
+    { label: 'AV / Projectors', value: 45, color: '#00A0A0' },
+    { label: 'Cameras & Media', value: 38, color: '#00B8B8' },
     { label: 'Workstations', value: 52, color: '#F26419' },
-    { label: 'Engineering Kits', value: 26, color: '#004643' },
+    { label: 'Engineering Kits', value: 26, color: '#008080' },
   ];
 
   const sampleDonutData = [
-    { label: 'In Active Use', value: 68, color: '#006B65' },
-    { label: 'Available / Idle', value: 42, color: '#F0EDE5' },
+    { label: 'In Active Use', value: 68, color: '#00A0A0' },
+    { label: 'Available / Idle', value: 42, color: '#FFFAFA' },
     { label: 'In Maintenance', value: 6, color: '#F26419' },
   ];
 
@@ -99,15 +97,11 @@ export default function StyleGuidePage() {
             </div>
             <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>Living Design Tokens & Component Library</h1>
             <p style={{ color: 'var(--text-secondary)', maxWidth: '640px', marginTop: '0.4rem' }}>
-              Calibrated on brand colors <strong>#004643</strong> (Deep Teal) and <strong>#F0EDE5</strong> (Warm Cream), with accent <strong>#F26419</strong> (Solar Orange), paired with typography in <strong>Chirp / Plus Jakarta Sans</strong>.
+              Calibrated on brand colors <strong>#008080</strong> (Teal) and <strong>#FFFAFA</strong> (Snow White), with accent <strong>#F26419</strong> (Solar Orange), paired with typography in <strong>Chirp / Plus Jakarta Sans</strong>.
             </p>
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button onClick={toggleTheme} className="btn btn-secondary">
-              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-              Toggle {theme === 'dark' ? 'Light' : 'Dark'} Mode
-            </button>
             <button onClick={() => setModalOpen(true)} className="btn btn-primary">
               <Sparkles size={16} />
               Open Glass Modal
@@ -121,19 +115,19 @@ export default function StyleGuidePage() {
         <h3>1. Calibrated Brand & Accent Palette</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
           <div className="glass-panel" style={{ padding: '1.25rem' }}>
-            <div style={{ width: '100%', height: '48px', borderRadius: 'var(--radius-sm)', background: '#004643', marginBottom: '0.75rem' }} />
+            <div style={{ width: '100%', height: '48px', borderRadius: 'var(--radius-sm)', background: '#008080', marginBottom: '0.75rem' }} />
             <div style={{ fontWeight: 700 }}>Deep Teal (Primary)</div>
-            <div style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>#004643 • var(--brand-teal-mid)</div>
+            <div style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>#008080 • var(--brand-teal-mid)</div>
           </div>
           <div className="glass-panel" style={{ padding: '1.25rem' }}>
-            <div style={{ width: '100%', height: '48px', borderRadius: 'var(--radius-sm)', background: '#F0EDE5', marginBottom: '0.75rem', border: '1px solid rgba(0,0,0,0.1)' }} />
+            <div style={{ width: '100%', height: '48px', borderRadius: 'var(--radius-sm)', background: '#FFFAFA', marginBottom: '0.75rem', border: '1px solid rgba(0,0,0,0.1)' }} />
             <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Warm Cream (Highlight)</div>
-            <div style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>#F0EDE5 • var(--brand-cream-base)</div>
+            <div style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>#FFFAFA • var(--brand-cream-base)</div>
           </div>
           <div className="glass-panel" style={{ padding: '1.25rem' }}>
-            <div style={{ width: '100%', height: '48px', borderRadius: 'var(--radius-sm)', background: '#006B65', marginBottom: '0.75rem' }} />
+            <div style={{ width: '100%', height: '48px', borderRadius: 'var(--radius-sm)', background: '#00A0A0', marginBottom: '0.75rem' }} />
             <div style={{ fontWeight: 700 }}>Teal Vivid (Accent 1)</div>
-            <div style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>#006B65 • var(--brand-teal-vivid)</div>
+            <div style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>#00A0A0 • var(--brand-teal-vivid)</div>
           </div>
           <div className="glass-panel" style={{ padding: '1.25rem' }}>
             <div style={{ width: '100%', height: '48px', borderRadius: 'var(--radius-sm)', background: '#F26419', marginBottom: '0.75rem' }} />
@@ -203,12 +197,12 @@ export default function StyleGuidePage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
           <GlassCard padding="1.5rem">
             <h4 style={{ marginBottom: '1rem' }}>Weekly Reservation Activity</h4>
-            <LineChart data={sampleSplineData} height={180} strokeColor="#006B65" />
+            <LineChart data={sampleSplineData} height={180} strokeColor="#00A0A0" />
           </GlassCard>
 
           <GlassCard padding="1.5rem">
             <h4 style={{ marginBottom: '1rem' }}>Inventory by Category</h4>
-            <BarChart data={sampleBarData} height={180} barColor="#006B65" />
+            <BarChart data={sampleBarData} height={180} barColor="#00A0A0" />
           </GlassCard>
 
           <GlassCard padding="1.5rem">

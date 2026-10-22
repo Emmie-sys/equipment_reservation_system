@@ -152,7 +152,7 @@ export default function ProfilePage() {
           <div style={{
             width: 72, height: 72,
             borderRadius: 'var(--radius-xl)',
-            background: 'var(--brand-forest-dark)',
+            background: 'var(--brand-teal-dark)',
             border: '1px solid rgba(230, 212, 230, 0.28)',
             color: '#FAF8FB',
             fontWeight: 800,
@@ -220,10 +220,10 @@ export default function ProfilePage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem' }}>
           <div style={{
             width: 36, height: 36, borderRadius: 'var(--radius-md)',
-            background: 'var(--brand-forest-dim)',
+            background: 'var(--brand-teal-dim)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <Lock size={17} style={{ color: 'var(--brand-forest-vivid)' }} />
+            <Lock size={17} style={{ color: 'var(--brand-teal-vivid)' }} />
           </div>
           <div>
             <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 0 }}>Security — Change Password</h3>

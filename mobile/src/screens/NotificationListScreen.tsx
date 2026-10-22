@@ -85,7 +85,7 @@ const NotificationCard: React.FC<{
             <Ionicons
               name={meta.icon as any}
               size={21}
-              color={isDark ? '#2DD4BF' : '#004643'}
+              color={isDark ? '#2DD4BF' : '#008080'}
             />
           </View>
 
@@ -238,7 +238,7 @@ const NotificationDetailModal: React.FC<{
               <Ionicons
                 name={meta.icon as any}
                 size={26}
-                color={isDark ? '#2DD4BF' : '#004643'}
+                color={isDark ? '#2DD4BF' : '#008080'}
               />
             </View>
 
@@ -285,7 +285,7 @@ const NotificationDetailModal: React.FC<{
                 <Ionicons
                   name="location-outline"
                   size={13}
-                  color={isDark ? '#2DD4BF' : '#004643'}
+                  color={isDark ? '#2DD4BF' : '#008080'}
                 />
                 <Text style={[styles.metaChipText, { color: theme.colors.textPrimary }]}>
                   {item.location}
@@ -302,18 +302,18 @@ const NotificationDetailModal: React.FC<{
                   styles.primaryBtn,
                   {
                     backgroundColor: isDark
-                      ? 'rgba(0, 70, 67, 0.45)'
-                      : '#004643',
+                      ? 'rgba(0, 128, 128, 0.45)'
+                      : '#008080',
                     borderColor: isDark
-                      ? 'rgba(0, 127, 122, 0.40)'
-                      : '#004643',
+                      ? 'rgba(0, 160, 160, 0.40)'
+                      : '#008080',
                   },
                 ]}
               >
                 <Text
                   style={[
                     styles.primaryBtnText,
-                    { color: isDark ? '#2DD4BF' : '#F0EDE5' },
+                    { color: isDark ? '#2DD4BF' : '#FFFAFA' },
                   ]}
                 >
                   {item.actionLabel}
@@ -321,7 +321,7 @@ const NotificationDetailModal: React.FC<{
                 <Ionicons
                   name="arrow-forward"
                   size={15}
-                  color={isDark ? '#2DD4BF' : '#F0EDE5'}
+                  color={isDark ? '#2DD4BF' : '#FFFAFA'}
                 />
               </Pressable>
             )}
@@ -512,7 +512,7 @@ export const NotificationListScreen: React.FC = () => {
                 <Text
                   style={[
                     styles.markAllText,
-                    { color: isDark ? '#2DD4BF' : '#004643' },
+                    { color: isDark ? '#2DD4BF' : '#008080' },
                   ]}
                 >
                   Read all
@@ -623,9 +623,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.10,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
     zIndex: 10,
   },
   headerContent: {
@@ -776,10 +776,10 @@ const styles = StyleSheet.create({
     paddingBottom: 36,
     maxHeight: '85%',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -8 },
-    shadowOpacity: 0.28,
-    shadowRadius: 24,
-    elevation: 22,
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 8,
   },
   sheetHandle: {
     width: 36,

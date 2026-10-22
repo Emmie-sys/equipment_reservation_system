@@ -54,7 +54,7 @@ function NotificationRow({ item, index, onSelect, isSelected }) {
           ? 'var(--glass-bg-subtle)'
           : 'transparent',
         borderColor: isSelected
-          ? 'var(--brand-forest-vivid)'
+          ? 'var(--brand-teal-vivid)'
           : 'var(--glass-border-subtle)',
       }}
     >
@@ -377,7 +377,7 @@ export default function NotificationsPage() {
           border: 1px solid var(--brand-teal-mid);
           color: var(--brand-cream-base); font-weight: 700; font-size: 0.88rem;
           cursor: pointer;
-          box-shadow: 0 4px 14px rgba(0, 70, 67, 0.22);
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
           transition: background var(--transition-fast), transform var(--transition-fast);
         }
         .notif-primary-btn:hover { background: var(--brand-teal-soft); transform: translateY(-1px); }

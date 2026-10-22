@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import { Appearance, useColorScheme } from 'react-native';
 import { darkTheme, lightTheme, Theme } from '../theme';
 
 type ThemeMode = 'dark' | 'light';
@@ -12,22 +13,46 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  themeMode: 'dark',
-  theme: darkTheme,
-  isDark: true,
+  themeMode: 'light',
+  theme: lightTheme,
+  isDark: false,
   toggleTheme: () => {},
   setThemeMode: () => {},
 });
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [themeMode, setThemeMode] = useState<ThemeMode>('dark');
+  const systemScheme = useColorScheme();
+  const [themeMode, setThemeMode] = useState<ThemeMode>(
+    systemScheme === 'dark' ? 'dark' : 'light'
+  );
 
+  useEffect(() => {
+    // Sync with initial device appearance
+    const current = Appearance.getColorScheme();
+    setThemeMode(current === 'dark' ? 'dark' : 'light');
+
+    // Listen dynamically to OS / device appearance changes
+    const subscription = Appearance.addChangeListener(({ colorScheme }) => {
+      setThemeMode(colorScheme === 'dark' ? 'dark' : 'light');
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+  // Update whenever systemScheme changes
+  useEffect(() => {
+    if (systemScheme) {
+      setThemeMode(systemScheme === 'dark' ? 'dark' : 'light');
+    }
+  }, [systemScheme]);
+
+  // Keep toggleTheme as harmless no-op as theme is catered for by device default
   const toggleTheme = () => {
-    setThemeMode((prev) => (prev === 'dark' ? 'light' : 'dark'));
+    // Theme follows device system default
   };
 
   const theme = useMemo(() => {
-    return themeMode === 'light' ? lightTheme : darkTheme;
+    return themeMode === 'dark' ? darkTheme : lightTheme;
   }, [themeMode]);
 
   const value = useMemo(

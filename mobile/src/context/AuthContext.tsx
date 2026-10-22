@@ -3,11 +3,15 @@ import { setAuthToken, clearAuthToken } from '../utils/storage';
 
 interface User {
   id: string | number;
+  user_id?: number;
   name?: string;
   first_name?: string;
   last_name?: string;
   email: string;
   role?: string;
+  roles?: string[];
+  student_number?: string;
+  phone_number?: string;
 }
 
 interface AuthContextType {

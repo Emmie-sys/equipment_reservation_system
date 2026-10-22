@@ -59,7 +59,9 @@ export default function GlassModal({
           maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: 'var(--glass-shadow-lg), 0 0 0 1px var(--glass-border-strong)',
+          boxShadow: 'var(--glass-shadow-xl)',
+          borderRadius: 'var(--radius-2xl)',
+          border: '1px solid var(--glass-border-medium)',
           overflow: 'hidden',
           padding: 0,
         }}
@@ -78,9 +80,9 @@ export default function GlassModal({
             {icon && (
               <div style={{
                 width: 32, height: 32, borderRadius: 'var(--radius-sm)',
-                background: 'var(--brand-forest-dim)',
+                background: 'var(--brand-teal-dim)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--brand-forest-vivid)', flexShrink: 0,
+                color: 'var(--brand-teal-vivid)', flexShrink: 0,
               }}>
                 {icon}
               </div>

@@ -12,23 +12,31 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { mobileReservationApi, Reservation } from '../api/reservations';
 import { useTheme } from '../context/ThemeContext';
+import { useMobileAuth } from '../context/AuthContext';
 import { GlassCard } from '../components/GlassCard';
 import { Badge } from '../components/Badge';
 import { Button } from '../components/Button';
 import { AppHeader } from '../components/AppHeader';
 import { SmoothReveal } from '../components/SmoothReveal';
 
-const STATUS_FILTERS = ['All', 'Active', 'Pending', 'Completed'];
+const STATUS_FILTERS = ['All', 'Active', 'Pending', 'Approved', 'Completed'];
 
 export const MyReservationsScreen = ({ navigation }: any) => {
+  const { user } = useMobileAuth();
   const { theme, isDark } = useTheme();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [feedback, setFeedback] = useState<string | null>(null);
+
+  const isStaffOrAdmin = user?.roles?.some((r: string) =>
+    ['ADMIN', 'ATTENDANT', 'TECHNICIAN'].includes(r?.toUpperCase())
+  );
 
   const fetchReservations = async () => {
     try {
+      setIsLoading(true);
       const res = await mobileReservationApi.getAll();
       setReservations(res.data || []);
     } catch (err) {
@@ -41,7 +49,7 @@ export const MyReservationsScreen = ({ navigation }: any) => {
 
   useEffect(() => {
     fetchReservations();
-  }, []);
+  }, [user]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -60,6 +68,8 @@ export const MyReservationsScreen = ({ navigation }: any) => {
           onPress: async () => {
             try {
               await mobileReservationApi.cancel(reservationId);
+              setFeedback(`Reservation #${reservationId} cancelled.`);
+              setTimeout(() => setFeedback(null), 3000);
               fetchReservations();
             } catch (err: any) {
               Alert.alert('Cancellation Error', err.message || 'Failed to cancel reservation');
@@ -68,6 +78,67 @@ export const MyReservationsScreen = ({ navigation }: any) => {
         },
       ]
     );
+  };
+
+  const handleApprove = async (id: number) => {
+    try {
+      await mobileReservationApi.approve(id, 'Approved by depot attendant.');
+      setFeedback(`Reservation #${id} approved.`);
+      setTimeout(() => setFeedback(null), 3000);
+      fetchReservations();
+    } catch (err: any) {
+      Alert.alert('Approval Error', err.message || 'Failed to approve');
+    }
+  };
+
+  const handleReject = async (id: number) => {
+    Alert.prompt
+      ? Alert.prompt(
+          'Reject Reservation',
+          'Enter reason for rejection:',
+          async (reason) => {
+            try {
+              await mobileReservationApi.reject(id, reason || 'Equipment unavailable');
+              setFeedback(`Reservation #${id} rejected.`);
+              setTimeout(() => setFeedback(null), 3000);
+              fetchReservations();
+            } catch (err: any) {
+              Alert.alert('Error', err.message);
+            }
+          }
+        )
+      : (async () => {
+          try {
+            await mobileReservationApi.reject(id, 'Equipment unavailable');
+            setFeedback(`Reservation #${id} rejected.`);
+            setTimeout(() => setFeedback(null), 3000);
+            fetchReservations();
+          } catch (err: any) {
+            Alert.alert('Error', err.message);
+          }
+        })();
+  };
+
+  const handleHandover = async (id: number) => {
+    try {
+      await mobileReservationApi.checkin(id, 'Physical equipment handed over at desk.');
+      setFeedback(`Reservation #${id} marked as checked out (Active Loan).`);
+      setTimeout(() => setFeedback(null), 3000);
+      fetchReservations();
+    } catch (err: any) {
+      Alert.alert('Handover Error', err.message || 'Failed to handover');
+    }
+  };
+
+  const handleReturn = async (id: number) => {
+    try {
+      await mobileReservationApi.checkout(id, 'All accessories intact and operational.', 'Equipment returned.');
+      setFeedback(`Reservation #${id} marked as returned (Completed).`);
+      setTimeout(() => setFeedback(null), 3000);
+      fetchReservations();
+    } catch (err: any) {
+      Alert.alert('Return Error', err.message || 'Failed to process return');
+    }
   };
 
   const filteredList = reservations.filter((item) => {
@@ -81,6 +152,8 @@ export const MyReservationsScreen = ({ navigation }: any) => {
     const modelName = equip?.model?.model_name || `Reservation #${item.reservation_id}`;
     const status = item.status?.status_name || 'pending';
     const isPending = status === 'pending';
+    const isApproved = status === 'approved';
+    const isActive = status === 'active';
 
     const getBadgeVariant = (st: string) => {
       switch (st) {
@@ -92,7 +165,7 @@ export const MyReservationsScreen = ({ navigation }: any) => {
         case 'completed':
           return 'completed';
         case 'rejected':
-          case 'cancelled':
+        case 'cancelled':
           return 'rejected';
         default:
           return 'brand';
@@ -166,17 +239,62 @@ export const MyReservationsScreen = ({ navigation }: any) => {
             </View>
           ) : null}
 
-          {isPending ? (
-            <View style={styles.actionRow}>
-              <Button
-                title="Cancel Request"
-                variant="danger"
-                size="sm"
-                icon={<Ionicons name="close-circle-outline" size={14} color={isDark ? '#FB7185' : '#be123c'} />}
-                onPress={() => handleCancel(item.reservation_id)}
-              />
-            </View>
-          ) : null}
+          {/* Action Row */}
+          <View style={styles.actionRow}>
+            {isStaffOrAdmin ? (
+              <>
+                {isPending && (
+                  <>
+                    <Button
+                      title="Approve"
+                      variant="primary"
+                      size="sm"
+                      onPress={() => handleApprove(item.reservation_id)}
+                      style={{ flex: 1 }}
+                    />
+                    <Button
+                      title="Reject"
+                      variant="danger"
+                      size="sm"
+                      onPress={() => handleReject(item.reservation_id)}
+                      style={{ flex: 1 }}
+                    />
+                  </>
+                )}
+                {isApproved && (
+                  <Button
+                    title="Hand Over Equipment"
+                    variant="primary"
+                    size="sm"
+                    icon={<Ionicons name="arrow-forward-circle-outline" size={14} color="#FFF" />}
+                    onPress={() => handleHandover(item.reservation_id)}
+                    style={{ flex: 1 }}
+                  />
+                )}
+                {isActive && (
+                  <Button
+                    title="Inspect & Check-in Return"
+                    variant="secondary"
+                    size="sm"
+                    icon={<Ionicons name="checkbox-outline" size={14} color={theme.colors.textPrimary} />}
+                    onPress={() => handleReturn(item.reservation_id)}
+                    style={{ flex: 1 }}
+                  />
+                )}
+              </>
+            ) : (
+              isPending && (
+                <Button
+                  title="Cancel Request"
+                  variant="danger"
+                  size="sm"
+                  icon={<Ionicons name="close-circle-outline" size={14} color={isDark ? '#FB7185' : '#be123c'} />}
+                  onPress={() => handleCancel(item.reservation_id)}
+                  style={{ flex: 1 }}
+                />
+              )
+            )}
+          </View>
         </GlassCard>
       </SmoothReveal>
     );
@@ -184,7 +302,14 @@ export const MyReservationsScreen = ({ navigation }: any) => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.canvasBg }]}>
-      <AppHeader title="My Bookings" />
+      <AppHeader title={isStaffOrAdmin ? 'Depot Reservations Queue' : 'My Reservations'} />
+
+      {feedback && (
+        <View style={[styles.toast, { backgroundColor: 'rgba(0, 128, 128, 0.15)', borderColor: 'rgba(0, 128, 128, 0.35)' }]}>
+          <Ionicons name="checkmark-circle" size={16} color="#2DD4BF" />
+          <Text style={[styles.toastText, { color: '#2DD4BF' }]}>{feedback}</Text>
+        </View>
+      )}
 
       {/* Filter Tabs */}
       <View
@@ -201,32 +326,30 @@ export const MyReservationsScreen = ({ navigation }: any) => {
           showsHorizontalScrollIndicator={false}
           data={STATUS_FILTERS}
           keyExtractor={(item) => item}
-          contentContainerStyle={styles.filterContent}
+          contentContainerStyle={styles.filterList}
           renderItem={({ item }) => {
-            const isActive = selectedFilter === item;
+            const isSelected = selectedFilter === item;
             return (
               <Pressable
                 onPress={() => setSelectedFilter(item)}
                 style={[
-                  styles.filterChip,
+                  styles.filterPill,
                   {
-                    backgroundColor: theme.colors.surfaceSecondary,
-                    borderColor: theme.colors.borderSubtle,
-                  },
-                  isActive && {
-                    backgroundColor: isDark ? 'rgba(90, 45, 92, 0.35)' : 'rgba(90, 45, 92, 0.12)',
-                    borderColor: isDark ? theme.colors.brandLilacBase : theme.colors.brandPlumDeep,
+                    backgroundColor: isSelected
+                      ? isDark
+                        ? theme.colors.brandTealBase
+                        : theme.colors.brandForestMid
+                      : theme.colors.surfaceSecondary,
+                    borderColor: isSelected ? theme.colors.brandTealBase : theme.colors.borderSubtle,
                   },
                 ]}
               >
                 <Text
                   style={[
-                    styles.filterChipText,
-                    { color: theme.colors.textSecondary },
-                    isActive && {
-                      color: isDark ? theme.colors.brandLilacBase : theme.colors.brandPlumDeep,
-                      fontFamily: 'Chirp-Bold',
-                      fontWeight: '700',
+                    styles.filterText,
+                    {
+                      color: isSelected ? '#FFFFFF' : theme.colors.textMuted,
+                      fontWeight: isSelected ? '700' : '500',
                     },
                   ]}
                 >
@@ -238,11 +361,21 @@ export const MyReservationsScreen = ({ navigation }: any) => {
         />
       </View>
 
+      {/* List / Content */}
       {isLoading ? (
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={theme.colors.brandForestVivid} />
-          <Text style={[styles.loadingText, { color: theme.colors.textMuted }]}>
-            Fetching your reservation records...
+        <View style={styles.loader}>
+          <ActivityIndicator size="large" color={isDark ? '#2DD4BF' : '#008080'} />
+        </View>
+      ) : filteredList.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="calendar-outline" size={48} color={theme.colors.textMuted} />
+          <Text style={[styles.emptyTitle, { color: theme.colors.textPrimary }]}>
+            No reservations found
+          </Text>
+          <Text style={[styles.emptySubtitle, { color: theme.colors.textMuted }]}>
+            {isStaffOrAdmin
+              ? 'No bookings in the depot match this filter.'
+              : 'You have no scheduled bookings in this category.'}
           </Text>
         </View>
       ) : (
@@ -255,26 +388,8 @@ export const MyReservationsScreen = ({ navigation }: any) => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={isDark ? theme.colors.brandLilacBase : theme.colors.brandForestDark}
+              tintColor={isDark ? '#2DD4BF' : '#008080'}
             />
-          }
-          ListEmptyComponent={
-            <GlassCard style={styles.emptyContainer} padding={20}>
-              <Ionicons name="calendar-outline" size={38} color={theme.colors.textMuted} style={{ marginBottom: 8 }} />
-              <Text style={[styles.emptyTitle, { color: theme.colors.textPrimary }]}>No Reservations</Text>
-              <Text style={[styles.emptySubtitle, { color: theme.colors.textMuted }]}>
-                {selectedFilter === 'All'
-                  ? "You haven't requested any equipment yet. Explore the campus catalog to book gear."
-                  : `No ${selectedFilter.toLowerCase()} reservations on record.`}
-              </Text>
-              <Button
-                title="Browse Equipment Catalog"
-                variant="primary"
-                size="sm"
-                style={{ marginTop: 14 }}
-                onPress={() => navigation.navigate('CatalogTab')}
-              />
-            </GlassCard>
           }
         />
       )}
@@ -286,49 +401,49 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  toast: {
+    marginHorizontal: 16,
+    marginVertical: 6,
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  toastText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
   filterSection: {
-    paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
   },
-  filterContent: {
+  filterList: {
+    paddingHorizontal: 16,
     gap: 8,
   },
-  filterChip: {
+  filterPill: {
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 9999,
+    borderRadius: 20,
     borderWidth: 1,
   },
-  filterChipText: {
-    fontSize: 11,
-    fontFamily: 'Chirp-SemiBold',
-    fontWeight: '600',
+  filterText: {
+    fontSize: 12,
   },
   listContent: {
     padding: 16,
     gap: 12,
-    paddingBottom: 32,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 30,
-  },
-  loadingText: {
-    fontSize: 13,
-    fontFamily: 'Chirp-Regular',
-    marginTop: 12,
   },
   card: {
-    marginBottom: 4,
+    borderRadius: 16,
+    gap: 6,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
   },
   bookingIdPill: {
     paddingHorizontal: 8,
@@ -343,57 +458,59 @@ const styles = StyleSheet.create({
   },
   equipmentTitle: {
     fontSize: 15,
-    fontFamily: 'Chirp-Bold',
     fontWeight: '700',
+    marginTop: 2,
   },
   assetTag: {
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: 'monospace',
-    marginTop: 2,
-    marginBottom: 10,
   },
   dateBlock: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingTop: 8,
+    marginTop: 4,
     borderTopWidth: 1,
   },
   dateValue: {
-    fontSize: 11,
-    fontFamily: 'Chirp-SemiBold',
-    fontWeight: '600',
+    fontSize: 12,
   },
   purposeBox: {
     padding: 8,
-    borderRadius: 6,
-    marginTop: 8,
+    borderRadius: 8,
     borderWidth: 1,
+    marginTop: 2,
   },
   purposeText: {
     fontSize: 11,
-    fontFamily: 'Chirp-Regular',
-    fontStyle: 'italic',
+    lineHeight: 15,
   },
   actionRow: {
-    marginTop: 12,
-    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 6,
   },
-  emptyContainer: {
+  loader: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 20,
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+    gap: 8,
   },
   emptyTitle: {
-    fontSize: 15,
-    fontFamily: 'Chirp-Bold',
+    fontSize: 17,
     fontWeight: '700',
+    marginTop: 8,
   },
   emptySubtitle: {
-    fontSize: 12,
-    fontFamily: 'Chirp-Regular',
+    fontSize: 13,
     textAlign: 'center',
-    marginTop: 4,
     lineHeight: 18,
   },
 });

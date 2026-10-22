@@ -30,14 +30,14 @@ export default function EmptyState({
           width: 56,
           height: 56,
           borderRadius: 'var(--radius-xl)',
-          background: 'var(--brand-forest-dim)',
+          background: 'var(--brand-teal-dim)',
           border: '1px solid var(--glass-border-medium)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: 'var(--brand-forest-vivid)',
+          color: 'var(--brand-teal-vivid)',
           marginBottom: '1rem',
-          boxShadow: 'var(--glass-highlight-soft)',
+          boxShadow: 'var(--glass-shadow-xs)',
         }}
       >
         <Icon size={26} />

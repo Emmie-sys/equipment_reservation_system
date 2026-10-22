@@ -18,312 +18,192 @@ import { mobileApiClient } from '../api/client';
 import { setAuthToken } from '../utils/storage';
 import { GlassCard } from '../components/GlassCard';
 import { Button } from '../components/Button';
-import { Badge } from '../components/Badge';
 
 export const LoginScreen = () => {
   const insets = useSafeAreaInsets();
-  const [email, setEmail] = useState('alex.rivera@student.school.edu');
-  const [password, setPassword] = useState('emmie');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { login } = useMobileAuth();
-  const { theme, isDark, toggleTheme } = useTheme();
+  const { theme, isDark } = useTheme();
 
   const statusBarHeight = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 24) : insets.top;
-  const topPadding = Math.max(insets.top, statusBarHeight) + 12;
+  const topPadding = Math.max(insets.top, statusBarHeight) + 16;
 
   const handleLogin = async () => {
+    if (!email.trim() || !password) {
+      setError('Please enter your email and password.');
+      return;
+    }
     try {
       setIsLoading(true);
       setError(null);
-
       const res = await mobileApiClient('/auth/login', {
         method: 'POST',
-        body: { email, password },
+        body: { email: email.trim(), password },
       });
-
       const { token, user } = res.data;
       await setAuthToken(token);
       await login(user, token);
     } catch (err: any) {
-      setError(err.message || 'Login failed. Please verify institutional credentials.');
+      setError(err.message || 'Incorrect email or password.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const setDemoUser = (userEmail: string) => {
-    setEmail(userEmail);
-    setPassword('emmie');
-    setError(null);
-  };
-
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={[styles.keyboardContainer, { backgroundColor: theme.colors.canvasBg }]}
+      style={[styles.container, { backgroundColor: theme.colors.canvasBg }]}
     >
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingTop: topPadding }]}
+        contentContainerStyle={[styles.scroll, { paddingTop: topPadding }]}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        {/* Top bar with Theme Toggle */}
-        <View style={styles.topUtilityBar}>
-          <View />
-          <Pressable
-            onPress={toggleTheme}
-            style={[
-              styles.themeToggle,
-              {
-                backgroundColor: isDark ? 'rgba(230, 212, 230, 0.12)' : 'rgba(9, 56, 31, 0.08)',
-                borderColor: isDark ? 'rgba(230, 212, 230, 0.22)' : 'rgba(9, 56, 31, 0.18)',
-              },
-            ]}
-            accessibilityLabel={`Switch to ${isDark ? 'Light' : 'Dark'} Mode`}
-            accessibilityRole="button"
-          >
-            <Ionicons
-              name={isDark ? 'sunny' : 'moon'}
-              size={15}
-              color={isDark ? '#FBBF24' : '#5A2D5C'}
-            />
-            <Text style={[styles.themeToggleText, { color: theme.colors.textPrimary }]}>
-              {isDark ? 'Light Mode' : 'Dark Mode'}
-            </Text>
-          </Pressable>
-        </View>
-
-        {/* Brand Header */}
-        <View style={styles.brandHeader}>
+        {/* Logo */}
+        <View style={styles.brand}>
           <View
             style={[
-              styles.glyphContainer,
-              {
-                backgroundColor: theme.colors.brandForestDark,
-                borderColor: theme.colors.borderStrong,
-              },
+              styles.glyph,
+              { backgroundColor: '#008080', borderColor: 'rgba(255,255,255,0.22)' },
             ]}
           >
             <Text style={styles.glyphText}>R</Text>
           </View>
           <View style={styles.logoRow}>
-            <Text style={[styles.titleMain, { color: theme.colors.textPrimary }]}>RESERV</Text>
-            <Text style={styles.titleAccent}>iT</Text>
+            <Text style={[styles.logoMain, { color: theme.colors.textPrimary }]}>RESERV</Text>
+            <Text style={styles.logoAccent}>iT</Text>
           </View>
-          <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-            Institutional Equipment Network
+          <Text style={[styles.tagline, { color: theme.colors.textMuted }]}>
+            Campus Equipment Reservation
           </Text>
-          <View style={{ marginTop: 8 }}>
-            <Badge label="Verified Campus Directory" variant="brand" size="sm" />
-          </View>
         </View>
 
-        {/* Login Glass Form Card */}
-        <GlassCard style={styles.formCard} padding={20}>
-          <Text style={[styles.formTitle, { color: theme.colors.textPrimary }]}>
-            Institutional Sign In
-          </Text>
-          <Text style={[styles.formSubtitle, { color: theme.colors.textMuted }]}>
-            Use your authorized institutional SSO account
+        {/* Form */}
+        <GlassCard style={styles.card} padding={24}>
+          <Text style={[styles.heading, { color: theme.colors.textPrimary }]}>Sign in</Text>
+          <Text style={[styles.sub, { color: theme.colors.textMuted }]}>
+            University email or student ID
           </Text>
 
           {error ? (
             <View style={styles.errorBox}>
-              <Ionicons name="alert-circle" size={16} color="#FB7185" style={{ marginRight: 6 }} />
+              <Ionicons name="alert-circle" size={15} color="#FB7185" style={{ marginRight: 6 }} />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           ) : null}
 
-          <View style={styles.formGroup}>
-            <Text style={[styles.label, { color: theme.colors.textMuted }]}>INSTITUTIONAL EMAIL</Text>
+          {/* Email field */}
+          <View style={styles.fieldGroup}>
+            <Text style={[styles.label, { color: theme.colors.textMuted }]}>Email or Student ID</Text>
             <View
               style={[
-                styles.inputWrapper,
-                {
-                  backgroundColor: theme.colors.surfaceInput,
-                  borderColor: theme.colors.borderInput,
-                },
+                styles.inputRow,
+                { backgroundColor: theme.colors.surfaceInput, borderColor: theme.colors.borderInput },
               ]}
             >
-              <Ionicons name="mail-outline" size={18} color={theme.colors.textMuted} style={styles.inputIcon} />
+              <Ionicons name="mail-outline" size={17} color={theme.colors.textMuted} style={styles.icon} />
               <TextInput
-                placeholder="name@school.edu"
+                placeholder="user@gu.ac.ug"
                 placeholderTextColor={theme.colors.textMuted}
                 value={email}
                 onChangeText={setEmail}
                 style={[styles.input, { color: theme.colors.textPrimary }]}
                 autoCapitalize="none"
+                autoCorrect={false}
                 keyboardType="email-address"
+                returnKeyType="next"
               />
             </View>
           </View>
 
-          <View style={styles.formGroup}>
-            <Text style={[styles.label, { color: theme.colors.textMuted }]}>PASSWORD</Text>
+          {/* Password field */}
+          <View style={styles.fieldGroup}>
+            <Text style={[styles.label, { color: theme.colors.textMuted }]}>Password</Text>
             <View
               style={[
-                styles.inputWrapper,
-                {
-                  backgroundColor: theme.colors.surfaceInput,
-                  borderColor: theme.colors.borderInput,
-                },
+                styles.inputRow,
+                { backgroundColor: theme.colors.surfaceInput, borderColor: theme.colors.borderInput },
               ]}
             >
-              <Ionicons name="lock-closed-outline" size={18} color={theme.colors.textMuted} style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={17} color={theme.colors.textMuted} style={styles.icon} />
               <TextInput
                 placeholder="••••••••"
                 placeholderTextColor={theme.colors.textMuted}
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry
+                secureTextEntry={!showPassword}
                 style={[styles.input, { color: theme.colors.textPrimary }]}
+                returnKeyType="done"
+                onSubmitEditing={handleLogin}
               />
+              <Pressable onPress={() => setShowPassword((v) => !v)} hitSlop={10}>
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={17}
+                  color={theme.colors.textMuted}
+                />
+              </Pressable>
             </View>
           </View>
 
           <Button
-            title={isLoading ? 'Authenticating...' : 'Sign In to Portal'}
+            title={isLoading ? 'Signing in…' : 'Sign In'}
             onPress={handleLogin}
             variant="primary"
             size="lg"
             isLoading={isLoading}
-            style={styles.submitButton}
+            style={styles.btn}
           />
         </GlassCard>
 
-        {/* Quick Demo Credentials */}
-        <GlassCard style={styles.demoCard} padding={16}>
-          <Text style={[styles.demoLabel, { color: theme.colors.textMuted }]}>
-            Instant Demo Sign In Profiles
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Ionicons name="shield-checkmark-outline" size={13} color={theme.colors.textMuted} />
+          <Text style={[styles.footerText, { color: theme.colors.textMuted }]}>
+            Secured via institutional SSO
           </Text>
-          <View style={styles.demoButtonsRow}>
-            <Pressable
-              onPress={() => setDemoUser('alex.rivera@student.school.edu')}
-              style={[
-                styles.demoPill,
-                {
-                  backgroundColor: theme.colors.surfaceSecondary,
-                  borderColor: theme.colors.borderMedium,
-                },
-                email.includes('alex') && {
-                  borderColor: isDark ? '#34D399' : theme.colors.brandForestMid,
-                  backgroundColor: isDark ? 'rgba(27, 106, 65, 0.25)' : 'rgba(27, 106, 65, 0.12)',
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.demoPillText,
-                  { color: email.includes('alex') ? (isDark ? '#34D399' : '#155E38') : theme.colors.textSecondary },
-                ]}
-              >
-                Student (Alex)
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setDemoUser('sarah.jenkins@faculty.school.edu')}
-              style={[
-                styles.demoPill,
-                {
-                  backgroundColor: theme.colors.surfaceSecondary,
-                  borderColor: theme.colors.borderMedium,
-                },
-                email.includes('jenkins') && {
-                  borderColor: isDark ? '#34D399' : theme.colors.brandForestMid,
-                  backgroundColor: isDark ? 'rgba(27, 106, 65, 0.25)' : 'rgba(27, 106, 65, 0.12)',
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.demoPillText,
-                  { color: email.includes('jenkins') ? (isDark ? '#34D399' : '#155E38') : theme.colors.textSecondary },
-                ]}
-              >
-                Staff (Jenkins)
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setDemoUser('admin@school.edu')}
-              style={[
-                styles.demoPill,
-                {
-                  backgroundColor: theme.colors.surfaceSecondary,
-                  borderColor: theme.colors.borderMedium,
-                },
-                email.includes('admin') && {
-                  borderColor: isDark ? '#34D399' : theme.colors.brandForestMid,
-                  backgroundColor: isDark ? 'rgba(27, 106, 65, 0.25)' : 'rgba(27, 106, 65, 0.12)',
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.demoPillText,
-                  { color: email.includes('admin') ? (isDark ? '#34D399' : '#155E38') : theme.colors.textSecondary },
-                ]}
-              >
-                Admin
-              </Text>
-            </Pressable>
-          </View>
-        </GlassCard>
-
-        <Text style={[styles.footerNote, { color: theme.colors.textMuted }]}>
-          Protected by Institutional Single Sign-On • RESERViT v2.0
-        </Text>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  keyboardContainer: {
+  container: {
     flex: 1,
   },
-  scrollContent: {
-    padding: 20,
-    paddingTop: 36,
-    paddingBottom: 40,
+  scroll: {
+    paddingHorizontal: 24,
+    paddingBottom: 48,
+    flexGrow: 1,
     justifyContent: 'center',
   },
-  topUtilityBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  brand: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 28,
   },
-  themeToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 9999,
-    borderWidth: 1,
-  },
-  themeToggleText: {
-    fontSize: 12,
-    fontFamily: 'Chirp-Bold',
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
-  brandHeader: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  glyphContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 16,
+  glyph: {
+    width: 56,
+    height: 56,
+    borderRadius: 14,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 4,
   },
   glyphText: {
     color: '#FAF8FB',
-    fontSize: 30,
+    fontSize: 28,
     fontFamily: 'Chirp-Heavy',
     fontWeight: '800',
   },
@@ -331,69 +211,68 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  titleMain: {
-    fontSize: 28,
+  logoMain: {
+    fontSize: 26,
     fontFamily: 'Chirp-Heavy',
     fontWeight: '800',
-    letterSpacing: -0.6,
+    letterSpacing: -0.5,
   },
-  titleAccent: {
-    fontSize: 28,
+  logoAccent: {
+    fontSize: 26,
     fontFamily: 'Chirp-Heavy',
     fontWeight: '800',
-    color: '#34D399',
-    letterSpacing: -0.6,
+    color: '#F26419',
+    letterSpacing: -0.5,
   },
-  subtitle: {
-    fontSize: 12,
+  tagline: {
+    fontSize: 11.5,
     fontFamily: 'Chirp-Medium',
     fontWeight: '500',
     marginTop: 4,
     letterSpacing: 0.2,
   },
-  formCard: {
-    marginBottom: 20,
+  card: {
+    marginBottom: 16,
   },
-  formTitle: {
-    fontSize: 18,
+  heading: {
+    fontSize: 20,
     fontFamily: 'Chirp-Heavy',
     fontWeight: '800',
+    marginBottom: 2,
   },
-  formSubtitle: {
-    fontSize: 12,
+  sub: {
+    fontSize: 13,
     fontFamily: 'Chirp-Regular',
-    marginTop: 3,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   errorBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(225, 29, 72, 0.15)',
+    backgroundColor: 'rgba(225, 29, 72, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(225, 29, 72, 0.35)',
+    borderColor: 'rgba(225, 29, 72, 0.30)',
     borderRadius: 8,
     padding: 10,
     marginBottom: 16,
   },
   errorText: {
     color: '#FB7185',
-    fontSize: 12,
+    fontSize: 12.5,
     fontFamily: 'Chirp-Medium',
     fontWeight: '500',
     flex: 1,
   },
-  formGroup: {
-    marginBottom: 16,
+  fieldGroup: {
+    marginBottom: 14,
   },
   label: {
-    fontSize: 11,
+    fontSize: 11.5,
     fontFamily: 'Chirp-Bold',
     fontWeight: '700',
-    letterSpacing: 0.6,
+    letterSpacing: 0.3,
     marginBottom: 6,
-    textTransform: 'uppercase',
   },
-  inputWrapper: {
+  inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 10,
@@ -401,7 +280,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     height: 48,
   },
-  inputIcon: {
+  icon: {
     marginRight: 10,
   },
   input: {
@@ -410,42 +289,18 @@ const styles = StyleSheet.create({
     fontFamily: 'Chirp-Medium',
     height: '100%',
   },
-  submitButton: {
-    marginTop: 8,
+  btn: {
+    marginTop: 6,
   },
-  demoCard: {
-    marginBottom: 20,
-  },
-  demoLabel: {
-    fontSize: 11,
-    fontFamily: 'Chirp-Bold',
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 10,
-  },
-  demoButtonsRow: {
+  footer: {
     flexDirection: 'row',
-    gap: 8,
-  },
-  demoPill: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 10,
-    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 5,
+    marginTop: 4,
   },
-  demoPillText: {
-    fontSize: 11,
-    fontFamily: 'Chirp-Bold',
-    fontWeight: '700',
-  },
-  footerNote: {
-    textAlign: 'center',
+  footerText: {
     fontSize: 11,
     fontFamily: 'Chirp-Regular',
-    marginTop: 8,
   },
 });

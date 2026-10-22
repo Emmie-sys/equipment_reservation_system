@@ -1,31 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import {
-  Lock,
-  Mail,
-  AlertCircle,
-  ArrowRight,
-  ShieldCheck,
-  Wrench,
-  UserCheck,
-  GraduationCap,
-  Sparkles,
-  Sun,
-  Moon,
-  CheckCircle2,
-} from 'lucide-react';
+import { Lock, Mail, AlertCircle, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { useAuthContext } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
 import PasswordField from '../../components/forms/PasswordField';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuthContext();
-  const { theme, toggleTheme } = useTheme();
 
-  const [email, setEmail] = useState('admin@school.edu');
-  const [password, setPassword] = useState('emmie');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -35,56 +20,14 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
-
     try {
-      await login({ email, password });
+      await login({ email: email.trim(), password });
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.message || 'Invalid institutional credentials or deactivated account.');
+      setError(err.message || 'Invalid credentials. Please try again.');
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const demoAccounts = [
-    {
-      role: 'ADMIN',
-      title: 'Administrator',
-      email: 'admin@school.edu',
-      desc: 'Institutional Oversight',
-      icon: ShieldCheck,
-      color: '#22c55e',
-    },
-    {
-      role: 'TECHNICIAN',
-      title: 'Lab Technician',
-      email: 'r.miller@school.edu',
-      desc: 'Dispatch & Repairs',
-      icon: Wrench,
-      color: '#38bdf8',
-    },
-    {
-      role: 'STAFF',
-      title: 'Academic Faculty',
-      email: 's.jenkins@school.edu',
-      desc: 'Coursework Bookings',
-      icon: UserCheck,
-      color: '#c084fc',
-    },
-    {
-      role: 'STUDENT',
-      title: 'Student Member',
-      email: 'alex.rivera@student.school.edu',
-      desc: 'Self-Service Loans',
-      icon: GraduationCap,
-      color: '#f59e0b',
-    },
-  ];
-
-  const handleQuickFill = (accEmail) => {
-    setEmail(accEmail);
-    setPassword('emmie');
-    setError(null);
   };
 
   return (
@@ -95,113 +38,84 @@ export default function LoginPage() {
         alignItems: 'center',
         justifyContent: 'center',
         padding: '1.5rem',
-        position: 'relative',
         background: 'var(--canvas-bg)',
         backgroundImage: 'var(--canvas-ambient)',
       }}
     >
-      {/* Top right theme toggle */}
-      <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem' }}>
-        <button
-          onClick={toggleTheme}
-          className="btn btn-secondary btn-sm"
-          style={{ borderRadius: 'var(--radius-pill)', padding: '0.4rem 0.8rem' }}
-          title="Toggle Light / Dark mode"
-        >
-          {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-          <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-        </button>
-      </div>
-
-      {/* Main Container */}
       <div
         style={{
           width: '100%',
-          maxWidth: '960px',
+          maxWidth: '900px',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
           borderRadius: 'var(--radius-2xl)',
           overflow: 'hidden',
-          boxShadow: 'var(--glass-shadow-lg), 0 0 0 1px var(--glass-border-strong)',
+          border: '1px solid var(--glass-border-medium)',
+          boxShadow: 'var(--glass-shadow-xl)',
         }}
       >
-        {/* Left Side: Branded Visual Experience */}
+        {/* Left — Brand panel */}
         <div
           style={{
-            background: '#004643',
-            borderRight: '1px solid rgba(240, 237, 229, 0.15)',
+            background: '#008080',
             padding: '3rem 2.5rem',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            position: 'relative',
-            color: '#F0EDE5',
+            color: '#FFFAFA',
           }}
         >
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            {/* Logo */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginBottom: '2.5rem' }}>
+          {/* Logo */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginBottom: '2.75rem' }}>
               <div
                 style={{
-                  width: 46,
-                  height: 46,
+                  width: 44,
+                  height: 44,
                   borderRadius: 'var(--radius-md)',
-                  background: 'rgba(255, 255, 255, 0.15)',
-                  backdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  background: 'rgba(255, 255, 255, 0.14)',
+                  border: '1px solid rgba(255, 255, 255, 0.28)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M4 12C4 7.58172 7.58172 4 12 4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20"
-                    stroke="#FAF8FB"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M8 12L11 15L17 9"
-                    stroke="#F0EDE5"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M4 12C4 7.58172 7.58172 4 12 4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20" stroke="#FAF8FB" strokeWidth="2.5" strokeLinecap="round" />
+                  <path d="M8 12L11 15L17 9" stroke="#FFFAFA" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                   <circle cx="12" cy="12" r="1.5" fill="#F26419" />
                 </svg>
               </div>
               <div>
-                <h2 style={{ fontSize: '1.45rem', fontWeight: 800, letterSpacing: '-0.025em', color: '#F0EDE5' }}>
+                <div style={{ fontSize: '1.4rem', fontWeight: 800, letterSpacing: '-0.025em' }}>
                   RESERV<span style={{ color: '#F26419' }}>iT</span>
-                </h2>
-                <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(240, 237, 229, 0.85)', fontWeight: 600 }}>
-                  Equipment Reservation System
-                </p>
+                </div>
+                <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.09em', color: 'rgba(255,250,250,0.75)', fontWeight: 600 }}>
+                  Campus Equipment
+                </div>
               </div>
             </div>
 
-            <h1 style={{ fontSize: '1.95rem', fontWeight: 800, lineHeight: 1.25, color: '#F0EDE5', marginBottom: '1rem' }}>
-              Precision hardware access for academic excellence.
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, lineHeight: 1.3, marginBottom: '0.85rem', color: '#FFFAFA' }}>
+              Reserve the right learning aid, right when you need it.
             </h1>
-            <p style={{ fontSize: '0.925rem', color: 'rgba(250, 248, 251, 0.82)', lineHeight: 1.6 }}>
-              Reserve audiovisual assets, laboratory engineering equipment, high-performance workstations, and studio production gear with real-time conflict checking.
+            <p style={{ fontSize: '0.875rem', color: 'rgba(250,248,251,0.78)', lineHeight: 1.65 }}>
+              AV equipment, lab hardware, workstations and studio gear — all in one place.
             </p>
           </div>
 
-          <div style={{ position: 'relative', zIndex: 1, marginTop: '2.5rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.825rem', color: 'rgba(240, 237, 229, 0.92)' }}>
-              <CheckCircle2 size={16} color="#F26419" />
-              <span>Automated conflict avoidance & scheduling</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.825rem', color: 'rgba(240, 237, 229, 0.92)' }}>
-              <CheckCircle2 size={16} color="#F26419" />
-              <span>Role-governed approval and dispatch workflows</span>
-            </div>
+          {/* Feature bullets */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', marginTop: '2.5rem' }}>
+            {['Real-time availability & conflict checking', 'Role-based approval & dispatch workflows'].map((f) => (
+              <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', fontSize: '0.825rem', color: 'rgba(255,250,250,0.9)' }}>
+                <CheckCircle2 size={15} color="#F26419" />
+                <span>{f}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Right Side: Frosted Glass Login Panel */}
+        {/* Right — Form panel */}
         <div
           className="glass-card"
           style={{
@@ -213,41 +127,39 @@ export default function LoginPage() {
             background: 'var(--glass-surface-primary)',
           }}
         >
-          <div style={{ marginBottom: '1.75rem' }}>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.35rem' }}>
-              Institutional Sign In
-            </h3>
+          <div style={{ marginBottom: '2rem' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.3rem' }}>Continue with SSO</h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Enter your university credentials to access your portal.
+              Use your university email or student ID.
             </p>
           </div>
 
           {error && (
             <div
               style={{
-                padding: '0.85rem 1rem',
+                padding: '0.8rem 1rem',
                 borderRadius: 'var(--radius-md)',
                 background: 'var(--status-rejected-bg)',
                 border: '1px solid var(--status-rejected-border)',
                 color: 'var(--status-rejected-text)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.65rem',
+                gap: '0.6rem',
                 fontSize: '0.825rem',
                 marginBottom: '1.25rem',
               }}
             >
-              <AlertCircle size={18} style={{ flexShrink: 0 }} />
+              <AlertCircle size={16} style={{ flexShrink: 0 }} />
               <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
             <div className="form-group">
-              <label className="form-label">Campus Email</label>
+              <label className="form-label">Email or Student Number</label>
               <div style={{ position: 'relative' }}>
                 <Mail
-                  size={18}
+                  size={17}
                   style={{
                     position: 'absolute',
                     left: '0.85rem',
@@ -257,13 +169,14 @@ export default function LoginPage() {
                   }}
                 />
                 <input
-                  type="email"
+                  type="text"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@school.edu"
+                  placeholder="user@gu.ac.ug"
                   className="form-input"
                   style={{ paddingLeft: '2.5rem' }}
+                  autoComplete="email"
                 />
               </div>
             </div>
@@ -280,61 +193,27 @@ export default function LoginPage() {
               type="submit"
               disabled={isLoading}
               className="btn btn-primary btn-lg"
-              style={{ width: '100%', marginTop: '0.5rem' }}
+              style={{ width: '100%', marginTop: '0.4rem' }}
             >
-              {isLoading ? 'Authenticating session...' : 'Sign In to Portal'}
-              <ArrowRight size={17} />
+              {isLoading ? 'Signing in…' : 'Sign In'}
+              <ArrowRight size={16} />
             </button>
           </form>
 
-          {/* Quick Role Fillers */}
-          <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--glass-border-subtle)' }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '0.75rem',
-              }}
-            >
-              <span style={{ fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>
-                Demo Personas (Click to test role)
-              </span>
-              <span className="badge badge-brand" style={{ fontSize: '0.65rem' }}>
-                Password: emmie
-              </span>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.65rem' }}>
-              {demoAccounts.map((acc) => {
-                const Icon = acc.icon;
-                const isSelected = email === acc.email;
-                return (
-                  <button
-                    key={acc.role}
-                    type="button"
-                    onClick={() => handleQuickFill(acc.email)}
-                    className="glass-panel"
-                    style={{
-                      padding: '0.65rem 0.85rem',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      border: isSelected ? '1px solid var(--brand-teal-vivid)' : '1px solid var(--glass-border-subtle)',
-                      background: isSelected ? 'var(--brand-teal-dim)' : 'var(--glass-surface-secondary)',
-                      transition: 'all var(--transition-fast)',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
-                      <Icon size={14} color={acc.color} />
-                      <strong style={{ fontSize: '0.775rem', color: 'var(--text-primary)' }}>{acc.title}</strong>
-                    </div>
-                    <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }} className="truncate">
-                      {acc.email}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+          <div
+            style={{
+              marginTop: '2rem',
+              paddingTop: '1.25rem',
+              borderTop: '1px solid var(--glass-border-subtle)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.55rem',
+              color: 'var(--text-muted)',
+              fontSize: '0.72rem',
+            }}
+          >
+            <ShieldCheck size={14} color="var(--brand-teal-vivid)" style={{ flexShrink: 0 }} />
+            <span>Secured via institutional SSO</span>
           </div>
         </div>
       </div>

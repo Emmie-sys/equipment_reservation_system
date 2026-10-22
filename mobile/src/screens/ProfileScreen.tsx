@@ -21,7 +21,7 @@ import { AppHeader } from '../components/AppHeader';
 import { SmoothReveal } from '../components/SmoothReveal';
 
 export const ProfileScreen = ({ navigation }: any) => {
-  const { theme, isDark, toggleTheme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { user, logout } = useMobileAuth();
 
   // Account Customization States
@@ -99,8 +99,8 @@ export const ProfileScreen = ({ navigation }: any) => {
                   styles.largeAvatar,
                   {
                     backgroundColor: theme.colors.brandForestDark,
-                    borderColor: isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(27, 106, 65, 0.40)',
-                    shadowColor: isDark ? '#000' : theme.colors.brandForestMid,
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 128, 128, 0.35)',
+                    shadowColor: '#000000',
                   },
                 ]}
               >
@@ -169,53 +169,19 @@ export const ProfileScreen = ({ navigation }: any) => {
         {/* ── Appearance & Interface Group ────────────────────────────────────── */}
         <SmoothReveal delay={60} distance={10}>
           <Text style={[styles.sectionTitle, { color: theme.colors.textMuted }]}>
-            APPEARANCE & INTERFACE
+            DEVICE & FEEDBACK PREFERENCES
           </Text>
           <GlassCard padding={0} style={styles.groupCard}>
-            {/* Dark Mode Row */}
-            <View style={styles.tableRow}>
-              <View style={styles.rowLeft}>
-                <View
-                  style={[
-                    styles.iconBox,
-                    { backgroundColor: isDark ? 'rgba(251, 191, 36, 0.15)' : 'rgba(90, 45, 92, 0.15)' },
-                  ]}
-                >
-                  <Ionicons
-                    name={isDark ? 'sunny' : 'moon'}
-                    size={18}
-                    color={isDark ? '#FBBF24' : '#5A2D5C'}
-                  />
-                </View>
-                <View style={styles.rowLabelContainer}>
-                  <Text style={[styles.rowTitle, { color: theme.colors.textPrimary }]}>
-                    Dark Mode
-                  </Text>
-                  <Text style={[styles.rowSubtitle, { color: theme.colors.textMuted }]}>
-                    {isDark ? 'Apple Deep Space Glass' : 'Clean Institutional Bright'}
-                  </Text>
-                </View>
-              </View>
-              <Switch
-                value={isDark}
-                onValueChange={toggleTheme}
-                trackColor={{ false: '#767577', true: isDark ? '#007F7A' : '#004643' }}
-                thumbColor={isDark ? '#2DD4BF' : '#F0EDE5'}
-              />
-            </View>
-
-            <View style={[styles.separator, { backgroundColor: theme.colors.borderSubtle }]} />
-
             {/* Haptic Feedback Row */}
             <View style={styles.tableRow}>
               <View style={styles.rowLeft}>
                 <View
                   style={[
                     styles.iconBox,
-                    { backgroundColor: isDark ? 'rgba(0, 70, 67, 0.28)' : 'rgba(0, 70, 67, 0.10)' },
+                    { backgroundColor: isDark ? 'rgba(0, 128, 128, 0.28)' : 'rgba(0, 128, 128, 0.10)' },
                   ]}
                 >
-                  <Ionicons name="phone-portrait-outline" size={18} color={isDark ? '#2DD4BF' : '#004643'} />
+                  <Ionicons name="phone-portrait-outline" size={18} color={isDark ? '#2DD4BF' : '#008080'} />
                 </View>
                 <View style={styles.rowLabelContainer}>
                   <Text style={[styles.rowTitle, { color: theme.colors.textPrimary }]}>
@@ -229,8 +195,8 @@ export const ProfileScreen = ({ navigation }: any) => {
               <Switch
                 value={hapticsEnabled}
                 onValueChange={setHapticsEnabled}
-                trackColor={{ false: '#767577', true: isDark ? '#007F7A' : '#004643' }}
-                thumbColor={hapticsEnabled ? (isDark ? '#2DD4BF' : '#004643') : '#FAF8FB'}
+                trackColor={{ false: '#767577', true: isDark ? '#00A0A0' : '#008080' }}
+                thumbColor={hapticsEnabled ? (isDark ? '#2DD4BF' : '#008080') : '#FAF8FB'}
               />
             </View>
           </GlassCard>
@@ -325,8 +291,8 @@ export const ProfileScreen = ({ navigation }: any) => {
               <Switch
                 value={dueRemindersEnabled}
                 onValueChange={setDueRemindersEnabled}
-                trackColor={{ false: '#767577', true: isDark ? '#007F7A' : '#004643' }}
-                thumbColor={dueRemindersEnabled ? (isDark ? '#2DD4BF' : '#004643') : '#FAF8FB'}
+                trackColor={{ false: '#767577', true: isDark ? '#00A0A0' : '#008080' }}
+                thumbColor={dueRemindersEnabled ? (isDark ? '#2DD4BF' : '#008080') : '#FAF8FB'}
               />
             </View>
 
@@ -337,10 +303,10 @@ export const ProfileScreen = ({ navigation }: any) => {
                 <View
                   style={[
                     styles.iconBox,
-                    { backgroundColor: isDark ? 'rgba(0, 70, 67, 0.28)' : 'rgba(0, 70, 67, 0.10)' },
+                    { backgroundColor: isDark ? 'rgba(0, 128, 128, 0.28)' : 'rgba(0, 128, 128, 0.10)' },
                   ]}
                 >
-                  <Ionicons name="mail-outline" size={18} color={isDark ? '#2DD4BF' : '#004643'} />
+                  <Ionicons name="mail-outline" size={18} color={isDark ? '#2DD4BF' : '#008080'} />
                 </View>
                 <View style={styles.rowLabelContainer}>
                   <Text style={[styles.rowTitle, { color: theme.colors.textPrimary }]}>
@@ -354,8 +320,8 @@ export const ProfileScreen = ({ navigation }: any) => {
               <Switch
                 value={emailAlertsEnabled}
                 onValueChange={setEmailAlertsEnabled}
-                trackColor={{ false: '#767577', true: isDark ? '#007F7A' : '#004643' }}
-                thumbColor={emailAlertsEnabled ? (isDark ? '#2DD4BF' : '#004643') : '#FAF8FB'}
+                trackColor={{ false: '#767577', true: isDark ? '#00A0A0' : '#008080' }}
+                thumbColor={emailAlertsEnabled ? (isDark ? '#2DD4BF' : '#008080') : '#FAF8FB'}
               />
             </View>
           </GlassCard>
@@ -614,7 +580,7 @@ export const ProfileScreen = ({ navigation }: any) => {
                     <Ionicons
                       name="location"
                       size={18}
-                      color={isSelected ? (isDark ? '#2DD4BF' : '#004643') : theme.colors.textMuted}
+                      color={isSelected ? (isDark ? '#2DD4BF' : '#008080') : theme.colors.textMuted}
                     />
                     <Text
                       style={[
@@ -631,7 +597,7 @@ export const ProfileScreen = ({ navigation }: any) => {
                     </Text>
                   </View>
                   {isSelected && (
-                    <Ionicons name="checkmark-circle" size={20} color={isDark ? '#2DD4BF' : '#004643'} />
+                    <Ionicons name="checkmark-circle" size={20} color={isDark ? '#2DD4BF' : '#008080'} />
                   )}
                 </Pressable>
               );

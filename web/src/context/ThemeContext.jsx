@@ -1,18 +1,42 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext({
-  theme: 'dark',
-  isDark: true,
+  theme: 'light',
+  isDark: false,
   setTheme: () => {},
   toggleTheme: () => {},
 });
 
+const getSystemTheme = () => {
+  if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    return 'dark';
+  }
+  return 'light';
+};
+
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem('reservit_theme');
-    if (saved === 'light' || saved === 'dark') return saved;
-    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'dark'; // default to elegant dark glass
-  });
+  const [theme, setTheme] = useState(getSystemTheme);
+
+  // Dynamically listen to device / OS system theme changes
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemChange = (e) => {
+      setTheme(e.matches ? 'dark' : 'light');
+    };
+
+    // Ensure state matches current mediaQuery initially
+    setTheme(mediaQuery.matches ? 'dark' : 'light');
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleSystemChange);
+      return () => mediaQuery.removeEventListener('change', handleSystemChange);
+    } else if (mediaQuery.addListener) {
+      mediaQuery.addListener(handleSystemChange);
+      return () => mediaQuery.removeListener(handleSystemChange);
+    }
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -24,11 +48,11 @@ export function ThemeProvider({ children }) {
       root.classList.add('light');
       root.classList.remove('dark');
     }
-    localStorage.setItem('reservit_theme', theme);
   }, [theme]);
 
+  // Keep toggleTheme as safe no-op or fallback in case any consumer still references it
   const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+    // Theme is governed by device default
   };
 
   return (

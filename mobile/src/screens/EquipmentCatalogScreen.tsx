@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { mobileEquipmentApi, Equipment } from '../api/equipment';
 import { useTheme } from '../context/ThemeContext';
+import { useMobileAuth } from '../context/AuthContext';
 import { GlassCard } from '../components/GlassCard';
 import { Badge } from '../components/Badge';
 import { Button } from '../components/Button';
@@ -21,6 +22,7 @@ import { SmoothReveal } from '../components/SmoothReveal';
 const CATEGORIES = ['All', 'Computing', 'Audiovisual', 'Photography', 'Laboratory'];
 
 export const EquipmentCatalogScreen = ({ navigation }: any) => {
+  const { user } = useMobileAuth();
   const { theme, isDark } = useTheme();
   const [equipmentList, setEquipmentList] = useState<Equipment[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -28,10 +30,18 @@ export const EquipmentCatalogScreen = ({ navigation }: any) => {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const isStaffOrAdmin = user?.roles?.some((r: string) =>
+    ['ADMIN', 'ATTENDANT', 'TECHNICIAN'].includes(r?.toUpperCase())
+  );
+
   const fetchCatalog = async () => {
     try {
       const params: Record<string, string> = {};
       if (search.trim()) params.search = search.trim();
+      if (!isStaffOrAdmin) {
+        // Students and Lecturers strictly view available equipment excluding booked units
+        params.exclude_booked = 'true';
+      }
       const res = await mobileEquipmentApi.getAll(params);
       setEquipmentList(res.data || []);
     } catch (err) {
@@ -44,7 +54,7 @@ export const EquipmentCatalogScreen = ({ navigation }: any) => {
 
   useEffect(() => {
     fetchCatalog();
-  }, [search]);
+  }, [search, user]);
 
   const onRefresh = () => {
     setRefreshing(true);

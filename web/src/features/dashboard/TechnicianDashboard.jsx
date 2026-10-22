@@ -97,7 +97,7 @@ export default function TechnicianDashboard() {
             <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem' }}>
               {item?.model?.model_name || 'Standard Equipment'}
             </div>
-            <div style={{ fontSize: '0.725rem', color: 'var(--brand-forest-vivid)', fontFamily: 'var(--font-mono)' }}>
+            <div style={{ fontSize: '0.725rem', color: 'var(--brand-teal-vivid)', fontFamily: 'var(--font-mono)' }}>
               Tag: {item?.equipment?.asset_tag || 'Pending Tagging'}
             </div>
           </div>

@@ -41,23 +41,23 @@ export const Button: React.FC<ButtonProps> = ({
       case 'primary':
         return {
           button: {
-            backgroundColor: isDark ? theme.colors.brandLilacBase : theme.colors.brandForestDark,
-            borderColor: isDark ? theme.colors.borderStrong : theme.colors.brandForestDark,
+            backgroundColor: theme.colors.brandTealBase,
+            borderColor: isDark ? 'rgba(0, 160, 160, 0.40)' : theme.colors.brandTealBase,
           },
           text: {
-            color: isDark ? theme.colors.brandForestDark : '#FAF8FB',
-            fontFamily: 'Chirp-Heavy',
-            fontWeight: '800' as const,
+            color: '#FFFAFA',
+            fontFamily: 'Chirp-Bold',
+            fontWeight: '700' as const,
           },
         };
       case 'plum':
         return {
           button: {
-            backgroundColor: theme.colors.brandPlumDeep,
-            borderColor: isDark ? 'rgba(230, 212, 230, 0.28)' : 'rgba(90, 45, 92, 0.40)',
+            backgroundColor: theme.colors.brandOrange,
+            borderColor: 'rgba(242, 100, 25, 0.40)',
           },
           text: {
-            color: '#FAF8FB',
+            color: '#FFFFFF',
             fontFamily: 'Chirp-Bold',
             fontWeight: '700' as const,
           },
@@ -65,11 +65,11 @@ export const Button: React.FC<ButtonProps> = ({
       case 'danger':
         return {
           button: {
-            backgroundColor: isDark ? 'rgba(225, 29, 72, 0.20)' : 'rgba(225, 29, 72, 0.12)',
-            borderColor: isDark ? 'rgba(225, 29, 72, 0.40)' : 'rgba(225, 29, 72, 0.30)',
+            backgroundColor: isDark ? 'rgba(225, 29, 72, 0.18)' : 'rgba(225, 29, 72, 0.10)',
+            borderColor: isDark ? 'rgba(225, 29, 72, 0.35)' : 'rgba(225, 29, 72, 0.25)',
           },
           text: {
-            color: isDark ? '#FB7185' : '#be123c',
+            color: isDark ? '#FB7185' : '#E11D48',
             fontFamily: 'Chirp-Bold',
             fontWeight: '700' as const,
           },
@@ -81,7 +81,7 @@ export const Button: React.FC<ButtonProps> = ({
             borderColor: theme.colors.borderMedium,
           },
           text: {
-            color: theme.colors.textSecondary,
+            color: theme.colors.textPrimary,
             fontFamily: 'Chirp-SemiBold',
             fontWeight: '600' as const,
           },
@@ -106,22 +106,25 @@ export const Button: React.FC<ButtonProps> = ({
     switch (size) {
       case 'sm':
         return {
-          paddingVertical: 8,
-          paddingHorizontal: 12,
+          height: 36,
+          paddingHorizontal: 14,
           fontSize: 13,
+          borderRadius: 10,
         };
       case 'lg':
         return {
-          paddingVertical: 16,
+          height: 50,
           paddingHorizontal: 22,
           fontSize: 16,
+          borderRadius: 14,
         };
       case 'md':
       default:
         return {
-          paddingVertical: 12,
-          paddingHorizontal: 16,
-          fontSize: 14,
+          height: 44,
+          paddingHorizontal: 18,
+          fontSize: 15,
+          borderRadius: 12,
         };
     }
   };
@@ -137,8 +140,10 @@ export const Button: React.FC<ButtonProps> = ({
         styles.button,
         variantStyle.button,
         {
-          paddingVertical: sizeStyle.paddingVertical,
+          height: sizeStyle.height,
+          minHeight: sizeStyle.height,
           paddingHorizontal: sizeStyle.paddingHorizontal,
+          borderRadius: sizeStyle.borderRadius,
         },
         (disabled || isLoading) && styles.disabled,
         pressed && !disabled && !isLoading && styles.pressed,
@@ -148,7 +153,7 @@ export const Button: React.FC<ButtonProps> = ({
       {isLoading ? (
         <ActivityIndicator
           size="small"
-          color={variant === 'primary' ? (isDark ? theme.colors.brandForestDark : '#FAF8FB') : theme.colors.textPrimary}
+          color={variant === 'primary' ? '#FFFAFA' : theme.colors.textPrimary}
         />
       ) : (
         <View style={styles.content}>
@@ -171,7 +176,6 @@ export const Button: React.FC<ButtonProps> = ({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 12,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -183,17 +187,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   icon: {
-    marginRight: 4,
+    marginRight: 2,
   },
   text: {
     textAlign: 'center',
-    letterSpacing: 0.1,
+    letterSpacing: -0.2,
   },
   disabled: {
-    opacity: 0.5,
+    opacity: 0.45,
   },
   pressed: {
-    opacity: 0.85,
+    opacity: 0.88,
     transform: [{ scale: 0.98 }],
   },
 });

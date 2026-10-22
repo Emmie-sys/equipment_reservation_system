@@ -27,7 +27,7 @@ export default function StatCard({
     cyan: 'stat-icon-cyan',
   }[colorVariant] || 'stat-icon-emerald';
 
-  // Explicit icon colors — prevents invisible icons when CSS inheritance breaks
+  // Explicit icon colors — locked to brand teal + orange palette
   const iconColor = {
     emerald: '#5EC4BE',
     forest: '#5EC4BE',
@@ -35,10 +35,10 @@ export default function StatCard({
     plum: '#F47D3E',
     lilac: '#F47D3E',
     orange: '#F26419',
-    neutral: '#CBD5E1',
+    neutral: '#94A3B8',
     brand: '#5EC4BE',
-    amber: '#FCD34D',
-    cyan: '#67E8F9',
+    amber: '#F47D3E',
+    cyan: '#5EC4BE',
   }[colorVariant] || '#5EC4BE';
 
   const sparklineStroke = {
@@ -48,9 +48,9 @@ export default function StatCard({
     plum: '#F47D3E',
     lilac: '#F47D3E',
     orange: '#F26419',
-    neutral: '#CBD5E1',
+    neutral: '#94A3B8',
     brand: '#5EC4BE',
-    amber: '#fbbf24',
+    amber: '#F47D3E',
     cyan: '#5EC4BE',
   }[colorVariant] || '#5EC4BE';
 

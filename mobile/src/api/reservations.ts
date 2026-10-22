@@ -47,4 +47,8 @@ export const mobileReservationApi = {
       method: 'PATCH',
       body: { notes, condition_notes: conditionNotes },
     }),
+  approve: (id: number, notes = '') =>
+    mobileApiClient(`/reservations/${id}/approve`, { method: 'PATCH', body: { notes } }),
+  reject: (id: number, reason = '') =>
+    mobileApiClient(`/reservations/${id}/reject`, { method: 'PATCH', body: { reason } }),
 };

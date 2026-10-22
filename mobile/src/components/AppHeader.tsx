@@ -32,9 +32,20 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 }) => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  const { theme, isDark, toggleTheme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { user, logout } = useMobileAuth();
   const { unreadCount } = useNotifications();
+
+  const ROLE_LABEL_MAP: Record<string, string> = {
+    ADMIN: 'ADMIN',
+    ATTENDANT: 'ATTENDANT',
+    TECHNICIAN: 'ATTENDANT',
+    LECTURER: 'STAFF',
+    STAFF: 'STAFF',
+    STUDENT: 'STUDENT',
+  };
+  const rawRole = (user?.roles?.[0] || user?.role || 'STUDENT').toUpperCase();
+  const cleanRoleLabel = ROLE_LABEL_MAP[rawRole] || 'STUDENT';
 
   const [isMenuVisible, setIsMenuVisible] = useState(false);
 
@@ -195,12 +206,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   {
                     backgroundColor: theme.colors.brandForestDark,
                     borderColor: 'rgba(255, 255, 255, 0.22)',
-                    borderTopColor: 'rgba(255, 255, 255, 0.35)',
-                    shadowColor: theme.colors.brandForestDark,
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.55,
-                    shadowRadius: 10,
-                    elevation: 6,
+                    shadowColor: '#000000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.14,
+                    shadowRadius: 3,
+                    elevation: 2,
                   },
                 ]}
               >
@@ -358,7 +368,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   </Text>
                 </View>
                 <Badge
-                  label={user?.role?.toUpperCase() || 'STUDENT'}
+                  label={cleanRoleLabel}
                   variant="available"
                   size="sm"
                 />
@@ -397,62 +407,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
                 <View style={[styles.menuDivider, { backgroundColor: theme.colors.borderSubtle }]} />
 
-                {/* 2. Theme Appearance Toggle */}
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.menuRow,
-                    pressed && { backgroundColor: theme.colors.surfaceSecondary },
-                  ]}
-                  onPress={toggleTheme}
-                >
-                  <View style={styles.menuRowLeft}>
-                    <View
-                      style={[
-                        styles.menuIconBox,
-                        {
-                          backgroundColor: isDark
-                            ? 'rgba(251, 191, 36, 0.15)'
-                            : 'rgba(90, 45, 92, 0.15)',
-                        },
-                      ]}
-                    >
-                      <Ionicons
-                        name={isDark ? 'sunny' : 'moon'}
-                        size={18}
-                        color={isDark ? '#FBBF24' : '#5A2D5C'}
-                      />
-                    </View>
-                    <View>
-                      <Text style={[styles.menuRowTitle, { color: theme.colors.textPrimary }]}>
-                        Appearance
-                      </Text>
-                      <Text style={[styles.menuRowSub, { color: theme.colors.textMuted }]}>
-                        Currently {isDark ? 'Dark Mode' : 'Light Mode'}
-                      </Text>
-                    </View>
-                  </View>
-                  <View
-                    style={[
-                      styles.modePill,
-                      {
-                        backgroundColor: isDark
-                          ? 'rgba(230, 212, 230, 0.12)'
-                          : 'rgba(9, 56, 31, 0.08)',
-                        borderColor: isDark
-                          ? 'rgba(230, 212, 230, 0.22)'
-                          : 'rgba(9, 56, 31, 0.16)',
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.modePillText, { color: theme.colors.textPrimary }]}>
-                      Switch to {isDark ? 'Light' : 'Dark'}
-                    </Text>
-                  </View>
-                </Pressable>
-
-                <View style={[styles.menuDivider, { backgroundColor: theme.colors.borderSubtle }]} />
-
-                {/* 3. Institutional Catalog */}
+                {/* 2. Institutional Catalog */}
                 <Pressable
                   style={({ pressed }) => [
                     styles.menuRow,

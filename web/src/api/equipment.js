@@ -13,4 +13,9 @@ export const equipmentApi = {
   create: (data) => apiClient('/equipment', { method: 'POST', body: data }),
   update: (id, data) => apiClient(`/equipment/${id}`, { method: 'PATCH', body: data }),
   delete: (id) => apiClient(`/equipment/${id}`, { method: 'DELETE' }),
+  getModels: () => apiClient('/equipment/models'),
+  getCategories: () => apiClient('/equipment/categories'),
+  getStatuses: () => apiClient('/equipment/statuses'),
+  getRooms: () => apiClient('/equipment/rooms'),
+  updateStatus: (id, data) => apiClient(`/equipment/${id}/status`, { method: 'PATCH', body: data }),
 };

@@ -15,6 +15,7 @@ import {
   X,
   PlusCircle,
   AlertCircle,
+  UserPlus,
 } from 'lucide-react';
 import StatCard from '../../components/cards/StatCard';
 import StatusBadge from '../../components/data/StatusBadge';
@@ -23,6 +24,7 @@ import GlassCard from '../../components/glass/GlassCard';
 import GlassModal from '../../components/glass/GlassModal';
 import LineChart from '../../components/charts/LineChart';
 import DonutChart from '../../components/charts/DonutChart';
+import ProvisionStudentModal from '../../components/students/ProvisionStudentModal';
 import { dashboardApi } from '../../api/dashboard';
 import { reservationApi } from '../../api/reservations';
 import { useAuthContext } from '../../context/AuthContext';
@@ -35,6 +37,7 @@ export default function AdminDashboard() {
   const [actionError, setActionError] = useState(null);
   const [selectedRes, setSelectedRes] = useState(null);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [provisionModalOpen, setProvisionModalOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -174,7 +177,7 @@ export default function AdminDashboard() {
   ];
 
   const utilizationData = [
-    { label: 'Available', value: stats?.available_equipment ?? 114, color: '#006B65' },
+    { label: 'Available', value: stats?.available_equipment ?? 114, color: '#00A0A0' },
     { label: 'Active Loans', value: stats?.active_reservations ?? 28, color: '#38bdf8' },
     { label: 'Maintenance', value: stats?.in_maintenance ?? 6, color: '#F26419' },
   ];
@@ -214,6 +217,14 @@ export default function AdminDashboard() {
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setProvisionModalOpen(true)}
+              className="btn btn-secondary"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              <UserPlus size={16} />
+              <span>Provision Student</span>
+            </button>
             <Link to="/catalog" className="btn btn-secondary">
               <Boxes size={16} />
               Manage Catalog
@@ -314,7 +325,7 @@ export default function AdminDashboard() {
 
           <GlassCard padding="1.5rem">
             <h4 style={{ marginBottom: '0.75rem' }}>Weekly Reservation Velocity</h4>
-            <LineChart data={activityData} height={160} strokeColor="#006B65" />
+            <LineChart data={activityData} height={160} strokeColor="#00A0A0" />
           </GlassCard>
         </div>
       </div>
@@ -347,6 +358,13 @@ export default function AdminDashboard() {
           />
         </div>
       </GlassModal>
+
+      {/* Provision Student Modal */}
+      <ProvisionStudentModal
+        isOpen={provisionModalOpen}
+        onClose={() => setProvisionModalOpen(false)}
+        onSuccess={() => loadData()}
+      />
     </div>
   );
 }

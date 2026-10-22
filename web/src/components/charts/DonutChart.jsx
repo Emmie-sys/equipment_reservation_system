@@ -5,7 +5,7 @@ import React from 'react';
  * Apple-style SVG donut chart with center statistic readout and breakdown chips.
  */
 export default function DonutChart({
-  data = [], // [{ label: 'Active', value: 77, color: '#1B6A41' }, ...]
+  data = [], // [{ label: 'Active', value: 77, color: '#00A0A0' }, ...]
   centerLabel = 'Utilization',
   centerValue = '92%',
   size = 190,

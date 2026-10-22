@@ -57,7 +57,9 @@ export default function ReservationsPage() {
     notes: '',
   });
 
-  const isStaffOrAdmin = user?.roles?.some((r) => ['ADMIN', 'TECHNICIAN', 'STAFF'].includes(r));
+  const isStaffOrAdmin = user?.roles?.some((r) =>
+    ['ADMIN', 'ATTENDANT', 'TECHNICIAN', 'STAFF'].includes(r?.toUpperCase())
+  );
 
   const fetchReservations = useCallback(
     async (silent = false) => {
@@ -170,12 +172,12 @@ export default function ReservationsPage() {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: '0.25rem' }}>
-            Reservations
+            {isStaffOrAdmin ? 'Depot Reservations Management' : 'My Reservations'}
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
             {isStaffOrAdmin
               ? 'Review, approve, dispatch, and track all equipment bookings across campus.'
-              : 'Manage your active and past equipment loan requests.'}
+              : 'Track the status of your equipment bookings, pickup schedules, and return protocols.'}
           </p>
         </div>
 
@@ -320,7 +322,7 @@ export default function ReservationsPage() {
                     return (
                       <tr key={res.reservation_id}>
                         <td>
-                          <span className="font-mono text-xs" style={{ color: 'var(--brand-forest-vivid)', fontWeight: 700 }}>
+                          <span className="font-mono text-xs" style={{ color: 'var(--brand-teal-vivid)', fontWeight: 700 }}>
                             #{res.reservation_id}
                           </span>
                         </td>
@@ -328,10 +330,10 @@ export default function ReservationsPage() {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <div style={{
                               width: 28, height: 28, borderRadius: 'var(--radius-sm)',
-                              background: 'var(--brand-forest-dim)',
+                              background: 'var(--brand-teal-dim)',
                               display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                             }}>
-                              <Laptop size={14} style={{ color: 'var(--brand-forest-vivid)' }} />
+                              <Laptop size={14} style={{ color: 'var(--brand-teal-vivid)' }} />
                             </div>
                             <div>
                               <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)' }}>
@@ -454,7 +456,7 @@ export default function ReservationsPage() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
                     <div>
                       <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.875rem' }}>{modelName}</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--brand-forest-vivid)', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--brand-teal-vivid)', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
                         #{res.reservation_id}
                       </div>
                     </div>

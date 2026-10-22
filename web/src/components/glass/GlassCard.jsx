@@ -25,7 +25,7 @@ export default function GlassCard({
   }[variant] || 'glass-card';
 
   const elevatedStyle = variant === 'elevated'
-    ? { boxShadow: 'var(--glass-shadow-xl), var(--glass-shadow-glow)' }
+    ? { boxShadow: 'var(--glass-shadow-xl)' }
     : {};
 
   return (

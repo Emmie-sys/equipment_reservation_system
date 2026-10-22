@@ -36,4 +36,10 @@ export const mobileEquipmentApi = {
     const query = new URLSearchParams({ start_time: startTime, end_time: endTime }).toString();
     return mobileApiClient(`/equipment/${id}/availability?${query}`);
   },
+  getFaulty: () => mobileApiClient('/equipment/faulty'),
+  updateStatus: (id: number, data: { status: string; condition_notes?: string; is_bookable?: boolean }) =>
+    mobileApiClient(`/equipment/${id}/status`, { method: 'PATCH', body: data }),
+  create: (data: any) => mobileApiClient('/equipment', { method: 'POST', body: data }),
+  update: (id: number, data: any) => mobileApiClient(`/equipment/${id}`, { method: 'PATCH', body: data }),
+  delete: (id: number) => mobileApiClient(`/equipment/${id}`, { method: 'DELETE' }),
 };
